@@ -14,15 +14,8 @@ import { Command, Flag } from "effect/unstable/cli";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import sharp from "sharp";
 
-import {
-  BRAND_ASSET_PATHS,
-  DEVELOPMENT_PUBLIC_ICON_OVERRIDES,
-} from "./lib/brand-assets.ts";
-import {
-  encodePngIco,
-  readPngDimensions,
-  WINDOWS_ICON_SIZES,
-} from "./lib/icon-export.ts";
+import { BRAND_ASSET_PATHS, DEVELOPMENT_PUBLIC_ICON_OVERRIDES } from "./lib/brand-assets.ts";
+import { encodePngIco, readPngDimensions, WINDOWS_ICON_SIZES } from "./lib/icon-export.ts";
 
 const DESIGN_GENERATION = 26;
 const ICON_COMPOSER_EXECUTABLE_PARTS = [
@@ -107,12 +100,7 @@ export class IconExportFileSystemError extends Schema.TaggedErrorClass<IconExpor
 export class IconExportProcessError extends Schema.TaggedErrorClass<IconExportProcessError>()(
   "IconExportProcessError",
   {
-    operation: Schema.Literals([
-      "spawn",
-      "collect-stdout",
-      "collect-stderr",
-      "wait-for-exit",
-    ]),
+    operation: Schema.Literals(["spawn", "collect-stdout", "collect-stderr", "wait-for-exit"]),
     command: Schema.String,
     argumentCount: NonNegativeInt,
     cause: Schema.Defect(),
@@ -143,11 +131,7 @@ export class IconExportCommandFailedError extends Schema.TaggedErrorClass<IconEx
 export class IconExportToolResolutionError extends Schema.TaggedErrorClass<IconExportToolResolutionError>()(
   "IconExportToolResolutionError",
   {
-    reason: Schema.Literals([
-      "configured-invalid",
-      "configured-outdated",
-      "not-found",
-    ]),
+    reason: Schema.Literals(["configured-invalid", "configured-outdated", "not-found"]),
     designGeneration: Schema.Int,
     toolPath: Schema.optional(Schema.String),
     version: Schema.optional(Schema.String),
@@ -270,27 +254,19 @@ const JANUS_VARIANT_COLORS = {
   production: { background: "#18352A", accent: "#A9C6A4" },
 } as const;
 
-export const renderJanusSvg = (
-  variant: (typeof ICON_VARIANTS)[number],
-  size: number,
-): Buffer => {
+export const renderJanusSvg = (variant: (typeof ICON_VARIANTS)[number], size: number): Buffer => {
   const colors = JANUS_VARIANT_COLORS[variant.label];
   return Buffer.from(
     `<svg width="${size}" height="${size}" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="28" fill="${colors.background}"/><path d="M31 30H57V47H48V82C48 90 51 94 60 94C69 94 72 90 72 82V47H63V30H89V82C89 101 78 111 60 111C42 111 31 101 31 82V30Z" fill="#F4F1E8"/><path d="M63 30H89V47H80V82C80 87 79 91 77 95C75 91 72 88 68 86C70 85 72 83 72 82V47H63V30Z" fill="${colors.accent}"/></svg>`,
   );
 };
 
-const renderJanusPng = (
-  variant: (typeof ICON_VARIANTS)[number],
-  size: number,
-): Promise<Buffer> =>
+const renderJanusPng = (variant: (typeof ICON_VARIANTS)[number], size: number): Promise<Buffer> =>
   sharp(renderJanusSvg(variant, size))
     .png({ compressionLevel: 9, adaptiveFiltering: false })
     .toBuffer();
 
-const renderJanusMacPng = async (
-  variant: (typeof ICON_VARIANTS)[number],
-): Promise<Buffer> => {
+const renderJanusMacPng = async (variant: (typeof ICON_VARIANTS)[number]): Promise<Buffer> => {
   const body = await renderJanusPng(variant, 824);
   return sharp({
     create: {
@@ -335,9 +311,7 @@ export const renderJanusVariant = async (
 const MACOS_EXPORT_CODEX_PROMPT = [
   "Use [@Computer](plugin://computer-use@openai-bundled) and the Icon Composer app to export the three macOS app icons in this repository.",
   "For each project below, use Platform: macOS pre-Tahoe, Appearance: Default, Size: 1024pt, and Scale: 1×, then save the PNG to the exact destination:",
-  ...ICON_VARIANTS.map(
-    (variant) => `- ${variant.source} -> ${variant.outputs.macos}`,
-  ),
+  ...ICON_VARIANTS.map((variant) => `- ${variant.source} -> ${variant.outputs.macos}`),
   "Do not resize, composite, or otherwise post-process the exported PNGs.",
   "Verify every result is 1024×1024 and has the classic macOS safe area: an 824×824 opaque body inset 100px on every side, with only Icon Composer's native shadow extending beyond it.",
 ];
@@ -422,181 +396,147 @@ const runCommand = Effect.fn("iconExport.runCommand")(function* (
   return { stdout, stderr, exitCode } satisfies CommandResult;
 });
 
-const iconComposerToolFromDeveloperDirectory = (
-  developerDirectory: string,
-  path: Path.Path,
-) =>
-  path.resolve(
-    developerDirectory,
-    "..",
-    ...ICON_COMPOSER_EXECUTABLE_PARTS.slice(1),
-  );
+const iconComposerToolFromDeveloperDirectory = (developerDirectory: string, path: Path.Path) =>
+  path.resolve(developerDirectory, "..", ...ICON_COMPOSER_EXECUTABLE_PARTS.slice(1));
 
-const readSelectedDeveloperDirectory = Effect.fn(
-  "iconExport.readSelectedDeveloperDirectory",
-)(function* () {
-  const result = yield* runCommand("xcode-select", ["-p"]).pipe(Effect.option);
-  return Option.flatMap(result, (output) => {
-    const developerDirectory = output.stdout.trim();
-    return output.exitCode === 0 && developerDirectory.length > 0
-      ? Option.some(developerDirectory)
-      : Option.none();
+const readSelectedDeveloperDirectory = Effect.fn("iconExport.readSelectedDeveloperDirectory")(
+  function* () {
+    const result = yield* runCommand("xcode-select", ["-p"]).pipe(Effect.option);
+    return Option.flatMap(result, (output) => {
+      const developerDirectory = output.stdout.trim();
+      return output.exitCode === 0 && developerDirectory.length > 0
+        ? Option.some(developerDirectory)
+        : Option.none();
+    });
+  },
+);
+
+const findXcodeAppCandidates = Effect.fn("iconExport.findXcodeAppCandidates")(function* (
+  directory: string,
+) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const entries = yield* fs.readDirectory(directory).pipe(
+    Effect.mapError(
+      (cause) =>
+        new IconExportFileSystemError({
+          operation: "read-directory",
+          path: directory,
+          cause,
+        }),
+    ),
+    Effect.orElseSucceed(() => []),
+  );
+  return entries
+    .filter((entry) => /^Xcode.*\.app$/.test(entry))
+    .map((entry) => path.join(directory, entry, ...ICON_COMPOSER_EXECUTABLE_PARTS));
+});
+
+const probeIconComposerTool = Effect.fn("iconExport.probeIconComposerTool")(function* (
+  candidate: string,
+) {
+  const fs = yield* FileSystem.FileSystem;
+  const exists = yield* fs.exists(candidate).pipe(
+    Effect.mapError(
+      (cause) =>
+        new IconExportFileSystemError({
+          operation: "check-path",
+          path: candidate,
+          cause,
+        }),
+    ),
+    Effect.orElseSucceed(() => false),
+  );
+  if (!exists) return Option.none<IconComposerTool>();
+
+  const result = yield* runCommand(candidate, ["--version"]).pipe(Effect.option);
+  if (Option.isNone(result) || result.value.exitCode !== 0) {
+    return Option.none<IconComposerTool>();
+  }
+
+  const version = yield* decodeIconComposerVersion(result.value.stdout).pipe(Effect.option);
+  if (Option.isNone(version)) return Option.none<IconComposerTool>();
+
+  const bundleVersion = version.value["bundle-version"];
+  const shortVersion = version.value["short-bundle-version"];
+  return Option.some({
+    path: candidate,
+    version: `${shortVersion} (${bundleVersion})`,
+    bundleVersion,
+    supportsDesignGeneration: Number.parseInt(shortVersion, 10) >= 2,
   });
 });
 
-const findXcodeAppCandidates = Effect.fn("iconExport.findXcodeAppCandidates")(
-  function* (directory: string) {
-    const fs = yield* FileSystem.FileSystem;
-    const path = yield* Path.Path;
-    const entries = yield* fs.readDirectory(directory).pipe(
-      Effect.mapError(
-        (cause) =>
-          new IconExportFileSystemError({
-            operation: "read-directory",
-            path: directory,
-            cause,
-          }),
-      ),
-      Effect.orElseSucceed(() => []),
-    );
-    return entries
-      .filter((entry) => /^Xcode.*\.app$/.test(entry))
-      .map((entry) =>
-        path.join(directory, entry, ...ICON_COMPOSER_EXECUTABLE_PARTS),
-      );
-  },
-);
-
-const probeIconComposerTool = Effect.fn("iconExport.probeIconComposerTool")(
-  function* (candidate: string) {
-    const fs = yield* FileSystem.FileSystem;
-    const exists = yield* fs.exists(candidate).pipe(
-      Effect.mapError(
-        (cause) =>
-          new IconExportFileSystemError({
-            operation: "check-path",
-            path: candidate,
-            cause,
-          }),
-      ),
-      Effect.orElseSucceed(() => false),
-    );
-    if (!exists) return Option.none<IconComposerTool>();
-
-    const result = yield* runCommand(candidate, ["--version"]).pipe(
-      Effect.option,
-    );
-    if (Option.isNone(result) || result.value.exitCode !== 0) {
-      return Option.none<IconComposerTool>();
+const resolveIconComposerTool = Effect.fn("iconExport.resolveIconComposerTool")(function* () {
+  const path = yield* Path.Path;
+  const environment = yield* HostProcessEnvironment;
+  const configuredTool = environment.ICON_COMPOSER_TOOL?.trim();
+  if (configuredTool) {
+    const tool = yield* probeIconComposerTool(configuredTool);
+    if (Option.isNone(tool)) {
+      return yield* new IconExportToolResolutionError({
+        reason: "configured-invalid",
+        designGeneration: DESIGN_GENERATION,
+        toolPath: configuredTool,
+      });
     }
-
-    const version = yield* decodeIconComposerVersion(result.value.stdout).pipe(
-      Effect.option,
-    );
-    if (Option.isNone(version)) return Option.none<IconComposerTool>();
-
-    const bundleVersion = version.value["bundle-version"];
-    const shortVersion = version.value["short-bundle-version"];
-    return Option.some({
-      path: candidate,
-      version: `${shortVersion} (${bundleVersion})`,
-      bundleVersion,
-      supportsDesignGeneration: Number.parseInt(shortVersion, 10) >= 2,
-    });
-  },
-);
-
-const resolveIconComposerTool = Effect.fn("iconExport.resolveIconComposerTool")(
-  function* () {
-    const path = yield* Path.Path;
-    const environment = yield* HostProcessEnvironment;
-    const configuredTool = environment.ICON_COMPOSER_TOOL?.trim();
-    if (configuredTool) {
-      const tool = yield* probeIconComposerTool(configuredTool);
-      if (Option.isNone(tool)) {
-        return yield* new IconExportToolResolutionError({
-          reason: "configured-invalid",
-          designGeneration: DESIGN_GENERATION,
-          toolPath: configuredTool,
-        });
-      }
-      if (!tool.value.supportsDesignGeneration) {
-        return yield* new IconExportToolResolutionError({
-          reason: "configured-outdated",
-          designGeneration: DESIGN_GENERATION,
-          toolPath: configuredTool,
-          version: tool.value.version,
-        });
-      }
-      return tool.value;
+    if (!tool.value.supportsDesignGeneration) {
+      return yield* new IconExportToolResolutionError({
+        reason: "configured-outdated",
+        designGeneration: DESIGN_GENERATION,
+        toolPath: configuredTool,
+        version: tool.value.version,
+      });
     }
+    return tool.value;
+  }
 
-    const selectedDeveloperDirectory = yield* readSelectedDeveloperDirectory();
-    const configuredDeveloperDirectory = environment.DEVELOPER_DIR?.trim();
-    const homeDirectory = environment.HOME?.trim();
-    const searchDirectories = [
-      "/Applications",
-      ...(homeDirectory ? [path.join(homeDirectory, "Downloads")] : []),
-    ];
-    const xcodeCandidates = yield* Effect.forEach(
-      searchDirectories,
-      findXcodeAppCandidates,
-      {
-        concurrency: "unbounded",
-      },
-    );
-    const candidates = new Set<string>([
-      ...(configuredDeveloperDirectory
-        ? [
-            iconComposerToolFromDeveloperDirectory(
-              configuredDeveloperDirectory,
-              path,
-            ),
-          ]
-        : []),
-      ...Option.match(selectedDeveloperDirectory, {
-        onNone: () => [],
-        onSome: (developerDirectory) => [
-          iconComposerToolFromDeveloperDirectory(developerDirectory, path),
-        ],
+  const selectedDeveloperDirectory = yield* readSelectedDeveloperDirectory();
+  const configuredDeveloperDirectory = environment.DEVELOPER_DIR?.trim();
+  const homeDirectory = environment.HOME?.trim();
+  const searchDirectories = [
+    "/Applications",
+    ...(homeDirectory ? [path.join(homeDirectory, "Downloads")] : []),
+  ];
+  const xcodeCandidates = yield* Effect.forEach(searchDirectories, findXcodeAppCandidates, {
+    concurrency: "unbounded",
+  });
+  const candidates = new Set<string>([
+    ...(configuredDeveloperDirectory
+      ? [iconComposerToolFromDeveloperDirectory(configuredDeveloperDirectory, path)]
+      : []),
+    ...Option.match(selectedDeveloperDirectory, {
+      onNone: () => [],
+      onSome: (developerDirectory) => [
+        iconComposerToolFromDeveloperDirectory(developerDirectory, path),
+      ],
+    }),
+    path.join("/Applications", ...STANDALONE_ICON_COMPOSER_EXECUTABLE_PARTS),
+    ...(homeDirectory
+      ? [path.join(homeDirectory, "Applications", ...STANDALONE_ICON_COMPOSER_EXECUTABLE_PARTS)]
+      : []),
+    ...xcodeCandidates.flat(),
+  ]);
+  const probed = yield* Effect.forEach([...candidates], probeIconComposerTool, {
+    concurrency: "unbounded",
+  });
+  const compatibleTools = probed
+    .filter(Option.isSome)
+    .map((tool) => tool.value)
+    .filter((tool) => tool.supportsDesignGeneration)
+    .sort((left, right) =>
+      right.bundleVersion.localeCompare(left.bundleVersion, undefined, {
+        numeric: true,
       }),
-      path.join("/Applications", ...STANDALONE_ICON_COMPOSER_EXECUTABLE_PARTS),
-      ...(homeDirectory
-        ? [
-            path.join(
-              homeDirectory,
-              "Applications",
-              ...STANDALONE_ICON_COMPOSER_EXECUTABLE_PARTS,
-            ),
-          ]
-        : []),
-      ...xcodeCandidates.flat(),
-    ]);
-    const probed = yield* Effect.forEach(
-      [...candidates],
-      probeIconComposerTool,
-      {
-        concurrency: "unbounded",
-      },
     );
-    const compatibleTools = probed
-      .filter(Option.isSome)
-      .map((tool) => tool.value)
-      .filter((tool) => tool.supportsDesignGeneration)
-      .sort((left, right) =>
-        right.bundleVersion.localeCompare(left.bundleVersion, undefined, {
-          numeric: true,
-        }),
-      );
-    const newestTool = compatibleTools[0];
-    if (newestTool) return newestTool;
+  const newestTool = compatibleTools[0];
+  if (newestTool) return newestTool;
 
-    return yield* new IconExportToolResolutionError({
-      reason: "not-found",
-      designGeneration: DESIGN_GENERATION,
-    });
-  },
-);
+  return yield* new IconExportToolResolutionError({
+    reason: "not-found",
+    designGeneration: DESIGN_GENERATION,
+  });
+});
 
 const renderIcon = Effect.fn("iconExport.renderIcon")(function* (
   toolPath: string,
@@ -704,17 +644,8 @@ const renderVariant = Effect.fn("iconExport.renderVariant")(function* (
     const cached = renditionCache.get(cacheKey);
     if (cached) return cached;
 
-    const outputPath = path.join(
-      temporaryDirectory,
-      `${variant.label}-${platform}-${size}.png`,
-    );
-    const contents = yield* renderIcon(
-      toolPath,
-      sourcePath,
-      outputPath,
-      platform,
-      size,
-    );
+    const outputPath = path.join(temporaryDirectory, `${variant.label}-${platform}-${size}.png`);
+    const contents = yield* renderIcon(toolPath, sourcePath, outputPath, platform, size);
     renditionCache.set(cacheKey, contents);
     return contents;
   });
@@ -722,14 +653,12 @@ const renderVariant = Effect.fn("iconExport.renderVariant")(function* (
   const ios = yield* render("iOS", 1024);
   const icoRenditions = yield* Effect.forEach(
     WINDOWS_ICON_SIZES,
-    (size) =>
-      render("iOS", size).pipe(Effect.map((contents) => ({ size, contents }))),
+    (size) => render("iOS", size).pipe(Effect.map((contents) => ({ size, contents }))),
     { concurrency: 1 },
   );
   const ico = yield* Effect.try({
     try: () => encodePngIco(icoRenditions),
-    catch: (cause) =>
-      new IconExportEncodingError({ variant: variant.label, cause }),
+    catch: (cause) => new IconExportEncodingError({ variant: variant.label, cause }),
   });
 
   return new Map<string, Buffer>([
@@ -743,25 +672,23 @@ const renderVariant = Effect.fn("iconExport.renderVariant")(function* (
   ]);
 });
 
-const logManualMacOsExportInstructions = Effect.fn(
-  "iconExport.logManualMacOsExportInstructions",
-)(function* () {
-  yield* Console.warn(
-    [
-      "macOS icons require Icon Composer's GUI-only pre-Tahoe preset and were not changed.",
-      "Export each source with Platform: macOS pre-Tahoe, Appearance: Default, Size: 1024pt, Scale: 1×:",
-      ...ICON_VARIANTS.map(
-        (variant) => `- ${variant.source} -> ${variant.outputs.macos}`,
-      ),
-      "See assets/README.md for the complete workflow.",
-      "",
-      "Copy/paste this prompt into Codex to perform the native exports:",
-      "---",
-      ...MACOS_EXPORT_CODEX_PROMPT,
-      "---",
-    ].join("\n"),
-  );
-});
+const logManualMacOsExportInstructions = Effect.fn("iconExport.logManualMacOsExportInstructions")(
+  function* () {
+    yield* Console.warn(
+      [
+        "macOS icons require Icon Composer's GUI-only pre-Tahoe preset and were not changed.",
+        "Export each source with Platform: macOS pre-Tahoe, Appearance: Default, Size: 1024pt, Scale: 1×:",
+        ...ICON_VARIANTS.map((variant) => `- ${variant.source} -> ${variant.outputs.macos}`),
+        "See assets/README.md for the complete workflow.",
+        "",
+        "Copy/paste this prompt into Codex to perform the native exports:",
+        "---",
+        ...MACOS_EXPORT_CODEX_PROMPT,
+        "---",
+      ].join("\n"),
+    );
+  },
+);
 
 const writeAtomically = Effect.fn("iconExport.writeAtomically")(function* (
   repositoryRoot: string,
@@ -853,22 +780,17 @@ const isCurrent = Effect.fn("iconExport.isCurrent")(function* (
   return Buffer.from(actual).equals(expected);
 });
 
-export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (
-  checkOnly: boolean,
-) {
+export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (checkOnly: boolean) {
   const fs = yield* FileSystem.FileSystem;
   const repositoryRoot = yield* RepositoryRoot;
-  yield* Console.log(
-    "Exporting deterministic Janus SVG icon renditions with Sharp.",
-  );
+  yield* Console.log("Exporting deterministic Janus SVG icon renditions with Sharp.");
 
   const generated = new Map<string, Buffer>();
   for (const variant of ICON_VARIANTS) {
     yield* Console.log(`Rendering ${variant.label} Janus icon renditions...`);
     const variantAssets = yield* Effect.tryPromise({
       try: () => renderJanusVariant(variant),
-      catch: (cause) =>
-        new IconExportEncodingError({ variant: variant.label, cause }),
+      catch: (cause) => new IconExportEncodingError({ variant: variant.label, cause }),
     });
     for (const [relativePath, contents] of variantAssets) {
       generated.set(relativePath, contents);
@@ -879,24 +801,16 @@ export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (
     const sourceContents = generated.get(override.sourceRelativePath);
     if (sourceContents === undefined) {
       return yield* Effect.die(
-        new Error(
-          `Generated development web icon is missing: ${override.sourceRelativePath}`,
-        ),
+        new Error(`Generated development web icon is missing: ${override.sourceRelativePath}`),
       );
     }
     generated.set(override.targetRelativePath, sourceContents);
   }
 
-  const productionWindowsIcon = generated.get(
-    BRAND_ASSET_PATHS.productionWindowsIconIco,
-  );
-  const productionMacIcon = generated.get(
-    BRAND_ASSET_PATHS.productionMacIconPng,
-  );
+  const productionWindowsIcon = generated.get(BRAND_ASSET_PATHS.productionWindowsIconIco);
+  const productionMacIcon = generated.get(BRAND_ASSET_PATHS.productionMacIconPng);
   if (productionWindowsIcon === undefined || productionMacIcon === undefined) {
-    return yield* Effect.die(
-      new Error("Generated production Janus icon assets are missing."),
-    );
+    return yield* Effect.die(new Error("Generated production Janus icon assets are missing."));
   }
   generated.set("apps/desktop/resources/icon.ico", productionWindowsIcon);
   generated.set("apps/desktop/resources/icon.png", productionMacIcon);
@@ -905,9 +819,7 @@ export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (
     const stale = yield* Effect.filter(
       [...generated.entries()],
       ([relativePath, contents]) =>
-        isCurrent(repositoryRoot, relativePath, contents).pipe(
-          Effect.map((current) => !current),
-        ),
+        isCurrent(repositoryRoot, relativePath, contents).pipe(Effect.map((current) => !current)),
       { concurrency: "unbounded" },
     );
     if (stale.length > 0) {
@@ -915,16 +827,13 @@ export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (
         paths: stale.map(([relativePath]) => relativePath),
       });
     }
-    yield* Console.log(
-      `All ${generated.size} generated icon assets are current.`,
-    );
+    yield* Console.log(`All ${generated.size} generated icon assets are current.`);
     return;
   }
 
   yield* Effect.forEach(
     generated,
-    ([relativePath, contents]) =>
-      writeAtomically(repositoryRoot, relativePath, contents),
+    ([relativePath, contents]) => writeAtomically(repositoryRoot, relativePath, contents),
     { concurrency: 1, discard: true },
   );
   yield* Console.log(`Updated ${generated.size} generated icon assets.`);
@@ -934,9 +843,7 @@ export const exportBrandIconsCommand = Command.make(
   "export-brand-icons",
   {
     check: Flag.boolean("check").pipe(
-      Flag.withDescription(
-        "Verify generated icon assets without modifying files.",
-      ),
+      Flag.withDescription("Verify generated icon assets without modifying files."),
       Flag.withDefault(false),
     ),
   },

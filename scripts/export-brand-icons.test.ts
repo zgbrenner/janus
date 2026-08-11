@@ -1,11 +1,7 @@
 import { assert, describe, it } from "vite-plus/test";
 
 import { readPngDimensions } from "./lib/icon-export.ts";
-import {
-  ICON_VARIANTS,
-  renderJanusSvg,
-  renderJanusVariant,
-} from "./export-brand-icons.ts";
+import { ICON_VARIANTS, renderJanusSvg, renderJanusVariant } from "./export-brand-icons.ts";
 
 describe("export-brand-icons", () => {
   it("renders deterministic Janus production icon dimensions and an ICO bundle", async () => {
@@ -13,10 +9,7 @@ describe("export-brand-icons", () => {
     const first = await renderJanusVariant(variant);
     const second = await renderJanusVariant(variant);
 
-    assert.deepEqual(
-      first.get(variant.outputs.ios),
-      second.get(variant.outputs.ios),
-    );
+    assert.deepEqual(first.get(variant.outputs.ios), second.get(variant.outputs.ios));
     assert.deepEqual(readPngDimensions(first.get(variant.outputs.ios)!), {
       width: 1024,
       height: 1024,

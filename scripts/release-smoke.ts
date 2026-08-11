@@ -8,10 +8,7 @@ import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 import { parseDocument } from "yaml";
 
-const repoRoot = NodePath.resolve(
-  NodePath.dirname(NodeURL.fileURLToPath(import.meta.url)),
-  "..",
-);
+const repoRoot = NodePath.resolve(NodePath.dirname(NodeURL.fileURLToPath(import.meta.url)), "..");
 
 const workspaceFiles = [
   "package.json",
@@ -99,21 +96,13 @@ releaseDate: '2026-03-08T10:36:07.540Z'
   return { arm64Path, x64Path };
 }
 
-function assertContains(
-  haystack: string,
-  needle: string,
-  message: string,
-): void {
+function assertContains(haystack: string, needle: string, message: string): void {
   if (!haystack.includes(needle)) {
     throw new Error(message);
   }
 }
 
-function assertNotContains(
-  haystack: string,
-  needle: string,
-  message: string,
-): void {
+function assertNotContains(haystack: string, needle: string, message: string): void {
   if (haystack.includes(needle)) {
     throw new Error(message);
   }
@@ -121,25 +110,16 @@ function assertNotContains(
 
 function assertEqual<T>(actual: T, expected: T, message: string): void {
   if (actual !== expected) {
-    throw new Error(
-      `${message} Expected ${String(expected)}, received ${String(actual)}.`,
-    );
+    throw new Error(`${message} Expected ${String(expected)}, received ${String(actual)}.`);
   }
 }
 
-function assertArray(
-  value: unknown,
-  message: string,
-): asserts value is ReadonlyArray<unknown> {
+function assertArray(value: unknown, message: string): asserts value is ReadonlyArray<unknown> {
   if (!Array.isArray(value)) throw new Error(message);
 }
 
-function assertRecord(
-  value: unknown,
-  message: string,
-): asserts value is Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value))
-    throw new Error(message);
+function assertRecord(value: unknown, message: string): asserts value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(message);
 }
 
 function workflowDocument(path: string): Record<string, unknown> {
@@ -154,19 +134,14 @@ function workflowDocument(path: string): Record<string, unknown> {
   return workflow;
 }
 
-function job(
-  workflow: Record<string, unknown>,
-  id: string,
-): Record<string, unknown> {
+function job(workflow: Record<string, unknown>, id: string): Record<string, unknown> {
   assertRecord(workflow.jobs, "Workflow must contain jobs.");
   const value = workflow.jobs[id];
   assertRecord(value, `Workflow is missing '${id}' job.`);
   return value;
 }
 
-function steps(
-  jobDefinition: Record<string, unknown>,
-): ReadonlyArray<Record<string, unknown>> {
+function steps(jobDefinition: Record<string, unknown>): ReadonlyArray<Record<string, unknown>> {
   assertArray(jobDefinition.steps, "Job must contain steps.");
   return jobDefinition.steps.map((step) => {
     assertRecord(step, "Job step must be an object.");
@@ -199,9 +174,7 @@ function assertActionOccurrences(
   expectedCount: number,
 ): void {
   const actionName = action.slice(0, action.lastIndexOf("@"));
-  const occurrences = actions.filter((entry) =>
-    entry.uses.startsWith(`${actionName}@`),
-  );
+  const occurrences = actions.filter((entry) => entry.uses.startsWith(`${actionName}@`));
   assertEqual(
     occurrences.length,
     expectedCount,
@@ -226,9 +199,7 @@ function assertPackageVersion(path: string, version: string): void {
   }
 }
 
-const tempRoot = NodeFS.mkdtempSync(
-  NodePath.join(NodeOS.tmpdir(), "t3-release-smoke-"),
-);
+const tempRoot = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "t3-release-smoke-"));
 
 try {
   copyWorkspaceManifestFixture(tempRoot);
@@ -249,24 +220,13 @@ try {
 
   NodeFS.rmSync(NodePath.resolve(tempRoot, "pnpm-lock.yaml"), { force: true });
 
-  NodeChildProcess.execFileSync(
-    "vp",
-    ["install", "--lockfile-only", "--ignore-scripts"],
-    {
-      cwd: tempRoot,
-      stdio: "inherit",
-    },
-  );
+  NodeChildProcess.execFileSync("vp", ["install", "--lockfile-only", "--ignore-scripts"], {
+    cwd: tempRoot,
+    stdio: "inherit",
+  });
 
-  const lockfile = NodeFS.readFileSync(
-    NodePath.resolve(tempRoot, "pnpm-lock.yaml"),
-    "utf8",
-  );
-  assertContains(
-    lockfile,
-    "lockfileVersion:",
-    "Expected pnpm-lock.yaml to be regenerated.",
-  );
+  const lockfile = NodeFS.readFileSync(NodePath.resolve(tempRoot, "pnpm-lock.yaml"), "utf8");
+  assertContains(lockfile, "lockfileVersion:", "Expected pnpm-lock.yaml to be regenerated.");
 
   for (const relativePath of [
     "apps/server/package.json",
@@ -274,15 +234,10 @@ try {
     "apps/web/package.json",
     "packages/contracts/package.json",
   ]) {
-    assertPackageVersion(
-      NodePath.resolve(tempRoot, relativePath),
-      "9.9.9-smoke.0",
-    );
+    assertPackageVersion(NodePath.resolve(tempRoot, relativePath), "9.9.9-smoke.0");
   }
 
-  const ciWorkflow = workflowDocument(
-    NodePath.resolve(repoRoot, ".github/workflows/ci.yml"),
-  );
+  const ciWorkflow = workflowDocument(NodePath.resolve(repoRoot, ".github/workflows/ci.yml"));
   assertRecord(ciWorkflow.jobs, "CI must define jobs.");
   assertEqual(
     JSON.stringify(Object.keys(ciWorkflow.jobs).toSorted()),
@@ -304,10 +259,7 @@ try {
     null,
     "Security workflow pull-request trigger must have no broadened shape.",
   );
-  assertRecord(
-    securityWorkflow.on.push,
-    "Security workflow must scan main pushes.",
-  );
+  assertRecord(securityWorkflow.on.push, "Security workflow must scan main pushes.");
   assertEqual(
     JSON.stringify(securityWorkflow.on.push),
     JSON.stringify({ branches: ["main"] }),
@@ -336,28 +288,19 @@ try {
   );
   assertRecord(codeqlJob.strategy, "CodeQL must use a language matrix.");
   assertRecord(codeqlJob.strategy.matrix, "CodeQL must use a language matrix.");
-  assertArray(
-    codeqlJob.strategy.matrix.language,
-    "CodeQL must declare languages.",
-  );
+  assertArray(codeqlJob.strategy.matrix.language, "CodeQL must declare languages.");
   assertEqual(
     JSON.stringify([...codeqlJob.strategy.matrix.language].toSorted()),
     JSON.stringify(["actions", "javascript-typescript"]),
     "CodeQL must analyze JavaScript/TypeScript and GitHub Actions.",
   );
-  assertRecord(
-    codeqlJob.permissions,
-    "CodeQL must declare least-privilege permissions.",
-  );
+  assertRecord(codeqlJob.permissions, "CodeQL must declare least-privilege permissions.");
   assertEqual(
     JSON.stringify(codeqlJob.permissions),
     JSON.stringify({ contents: "read", "security-events": "write" }),
     "CodeQL must have only read contents and security-events write permissions.",
   );
-  assertRecord(
-    securityWorkflow.permissions,
-    "Security workflow must declare permissions.",
-  );
+  assertRecord(securityWorkflow.permissions, "Security workflow must declare permissions.");
   assertEqual(
     JSON.stringify(securityWorkflow.permissions),
     JSON.stringify({ contents: "read" }),
@@ -382,9 +325,7 @@ try {
   const ciActions = workflowActions(ciWorkflow);
   const securityActions = workflowActions(securityWorkflow);
   const releaseActions = workflowActions(
-    workflowDocument(
-      NodePath.resolve(repoRoot, ".github/workflows/release.yml"),
-    ),
+    workflowDocument(NodePath.resolve(repoRoot, ".github/workflows/release.yml")),
   );
   const allActions = [...ciActions, ...securityActions, ...releaseActions];
   assertActionOccurrences(allActions, "actions/checkout@v6", 11);
@@ -403,17 +344,11 @@ try {
     "Security workflow must scan main pushes.",
   );
 
-  const releasePath = NodePath.resolve(
-    repoRoot,
-    ".github/workflows/release.yml",
-  );
+  const releasePath = NodePath.resolve(repoRoot, ".github/workflows/release.yml");
   const releaseWorkflow = workflowDocument(releasePath);
   assertRecord(releaseWorkflow.on, "Release workflow must define triggers.");
   assertRecord(releaseWorkflow.on.push, "Release workflow must be tag-driven.");
-  assertArray(
-    releaseWorkflow.on.push.tags,
-    "Release workflow must filter tags.",
-  );
+  assertArray(releaseWorkflow.on.push.tags, "Release workflow must filter tags.");
   assertEqual(
     JSON.stringify(releaseWorkflow.on.push.tags),
     JSON.stringify(["v*.*.*"]),
@@ -427,28 +362,18 @@ try {
       (step) =>
         step.id === "tag" &&
         typeof step.run === "string" &&
-        step.run.includes(
-          "Release tags must be exact vX.Y.Z semantic versions.",
-        ) &&
+        step.run.includes("Release tags must be exact vX.Y.Z semantic versions.") &&
         step.run.includes("version=${tag#v}"),
     ),
     true,
     "Release tag must be the sole version source.",
   );
   assertEqual(
-    hasStep(
-      preflightSteps,
-      (step) => step.run === "node scripts/release-smoke.ts",
-    ),
+    hasStep(preflightSteps, (step) => step.run === "node scripts/release-smoke.ts"),
     true,
     "Release preflight must run the release contract.",
   );
-  for (const run of [
-    "vp check",
-    "vpr typecheck",
-    "vp run test",
-    "pnpm icons:check",
-  ]) {
+  for (const run of ["vp check", "vpr typecheck", "vp run test", "pnpm icons:check"]) {
     assertEqual(
       hasStep(preflightSteps, (step) => step.run === run),
       true,
@@ -461,34 +386,15 @@ try {
     JSON.stringify("preflight"),
     "WSL terminal module must wait for preflight.",
   );
-  const wslUpload = steps(wslBuild).find(
-    (step) => step.uses === "actions/upload-artifact@v7",
-  );
+  const wslUpload = steps(wslBuild).find((step) => step.uses === "actions/upload-artifact@v7");
   assertRecord(wslUpload, "WSL terminal module must use upload-artifact v7.");
-  assertRecord(
-    wslUpload.with,
-    "WSL terminal module upload must declare its artifact path.",
-  );
-  assertEqual(
-    wslUpload.with.name,
-    "wsl-node-pty-x64",
-    "WSL upload name must be stable.",
-  );
-  assertEqual(
-    wslUpload.with.path,
-    "wsl-prebuild/pty.node",
-    "WSL upload path must be stable.",
-  );
+  assertRecord(wslUpload.with, "WSL terminal module upload must declare its artifact path.");
+  assertEqual(wslUpload.with.name, "wsl-node-pty-x64", "WSL upload name must be stable.");
+  assertEqual(wslUpload.with.path, "wsl-prebuild/pty.node", "WSL upload path must be stable.");
   const build = job(releaseWorkflow, "build");
   assertRecord(build.strategy, "Release build must use a platform matrix.");
-  assertRecord(
-    build.strategy.matrix,
-    "Release build must use a platform matrix.",
-  );
-  assertArray(
-    build.strategy.matrix.include,
-    "Release build must include every platform.",
-  );
+  assertRecord(build.strategy.matrix, "Release build must use a platform matrix.");
+  assertArray(build.strategy.matrix.include, "Release build must include every platform.");
   assertEqual(
     JSON.stringify(build.strategy.matrix.include),
     JSON.stringify([
@@ -537,47 +443,20 @@ try {
   const manifestStagingStep = buildSteps.find(
     (step) => step.name === "Stage macOS updater manifest",
   );
-  assertRecord(
-    manifestStagingStep,
-    "Release is missing macOS updater-manifest staging.",
-  );
+  assertRecord(manifestStagingStep, "Release is missing macOS updater-manifest staging.");
   assertEqual(
     typeof manifestStagingStep.run === "string" &&
-      manifestStagingStep.run.includes(
-        'source_manifest="release-publish/latest-mac.yml"',
-      ) &&
-      manifestStagingStep.run.includes(
-        'mv "$source_manifest" release-publish/latest-mac-x64.yml',
-      ),
+      manifestStagingStep.run.includes('source_manifest="release-publish/latest-mac.yml"') &&
+      manifestStagingStep.run.includes('mv "$source_manifest" release-publish/latest-mac-x64.yml'),
     true,
     "macOS x64 must rename the builder's common updater manifest before upload.",
   );
-  const wslDownload = buildSteps.find(
-    (step) => step.uses === "actions/download-artifact@v8",
-  );
-  assertRecord(
-    wslDownload,
-    "Windows packaging must use download-artifact v8 for the WSL module.",
-  );
-  assertRecord(
-    wslDownload.with,
-    "WSL download must declare its artifact path.",
-  );
-  assertEqual(
-    wslDownload.if,
-    "matrix.platform == 'win'",
-    "WSL download must be Windows-only.",
-  );
-  assertEqual(
-    wslDownload.with.name,
-    "wsl-node-pty-x64",
-    "WSL download name must match upload.",
-  );
-  assertEqual(
-    wslDownload.with.path,
-    "wsl-prebuild",
-    "WSL download path must be stable.",
-  );
+  const wslDownload = buildSteps.find((step) => step.uses === "actions/download-artifact@v8");
+  assertRecord(wslDownload, "Windows packaging must use download-artifact v8 for the WSL module.");
+  assertRecord(wslDownload.with, "WSL download must declare its artifact path.");
+  assertEqual(wslDownload.if, "matrix.platform == 'win'", "WSL download must be Windows-only.");
+  assertEqual(wslDownload.with.name, "wsl-node-pty-x64", "WSL download name must match upload.");
+  assertEqual(wslDownload.with.path, "wsl-prebuild", "WSL download path must be stable.");
   assertEqual(
     hasStep(
       buildSteps,
@@ -593,8 +472,7 @@ try {
   assertEqual(
     hasStep(
       buildSteps,
-      (step) =>
-        typeof step.run === "string" && step.run.includes("latest-linux.yml"),
+      (step) => typeof step.run === "string" && step.run.includes("latest-linux.yml"),
     ),
     true,
     "Linux packaging must produce its updater manifest.",
@@ -616,18 +494,10 @@ try {
     "Platform packaging must upload artifacts with upload-artifact v7.",
   );
   const release = job(releaseWorkflow, "release");
-  assertRecord(
-    release.permissions,
-    "Final release must declare release-only permissions.",
-  );
+  assertRecord(release.permissions, "Final release must declare release-only permissions.");
   assertEqual(
     JSON.stringify(Object.keys(release.permissions).toSorted()),
-    JSON.stringify([
-      "artifact-metadata",
-      "attestations",
-      "contents",
-      "id-token",
-    ]),
+    JSON.stringify(["artifact-metadata", "attestations", "contents", "id-token"]),
     "Final release must have exactly its publication and attestation permissions.",
   );
   assertEqual(
@@ -635,16 +505,8 @@ try {
     "write",
     "Final release must publish GitHub Release assets.",
   );
-  assertEqual(
-    release.permissions["id-token"],
-    "write",
-    "Final release must create attestations.",
-  );
-  assertEqual(
-    release.permissions.attestations,
-    "write",
-    "Final release must upload attestations.",
-  );
+  assertEqual(release.permissions["id-token"], "write", "Final release must create attestations.");
+  assertEqual(release.permissions.attestations, "write", "Final release must upload attestations.");
   assertEqual(
     release.permissions["artifact-metadata"],
     "write",
@@ -670,15 +532,9 @@ try {
   const mergeIndex = releaseSteps.findIndex(
     (step) => step.name === "Merge macOS updater manifests",
   );
-  const validationIndex = releaseSteps.findIndex(
-    (step) => step.name === "Validate release assets",
-  );
-  const checksumIndex = releaseSteps.findIndex(
-    (step) => step.name === "Create checksums",
-  );
-  const attestIndex = releaseSteps.findIndex(
-    (step) => step.uses === "actions/attest@v4",
-  );
+  const validationIndex = releaseSteps.findIndex((step) => step.name === "Validate release assets");
+  const checksumIndex = releaseSteps.findIndex((step) => step.name === "Create checksums");
+  const attestIndex = releaseSteps.findIndex((step) => step.uses === "actions/attest@v4");
   const publishIndex = releaseSteps.findIndex(
     (step) => step.uses === "softprops/action-gh-release@v3",
   );
@@ -727,11 +583,7 @@ try {
     "t3 code",
     "t3-code",
   ]) {
-    assertNotContains(
-      releaseText,
-      forbidden,
-      `Release must not include '${forbidden}'.`,
-    );
+    assertNotContains(releaseText, forbidden, `Release must not include '${forbidden}'.`);
   }
 
   const { arm64Path, x64Path } = writeMacManifestFixtures(tempRoot);
