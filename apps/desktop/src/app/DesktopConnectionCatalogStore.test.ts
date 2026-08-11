@@ -49,6 +49,7 @@ function makeLayer(
   encryptionAvailable = true,
   failDecrypt: Ref.Ref<boolean> | null = null,
   fileSystemLayer: Layer.Layer<FileSystem.FileSystem> = NodeServices.layer,
+  desktopConfigEnv: Record<string, string | undefined> = { T3CODE_HOME: baseDir },
 ) {
   const environmentLayer = DesktopEnvironment.layer({
     dirname: "/repo/apps/desktop/src",
@@ -61,9 +62,7 @@ function makeLayer(
     resourcesPath: "/missing/resources",
     runningUnderArm64Translation: false,
   }).pipe(
-    Layer.provide(
-      Layer.mergeAll(NodeServices.layer, DesktopConfig.layerTest({ T3CODE_HOME: baseDir })),
-    ),
+    Layer.provide(Layer.mergeAll(NodeServices.layer, DesktopConfig.layerTest(desktopConfigEnv))),
   );
   const safeStorageLayer = makeSafeStorageLayer(encryptionAvailable, failDecrypt);
   const dependencies = Layer.mergeAll(
@@ -95,6 +94,53 @@ const withStore = <A, E, R>(
   }).pipe(Effect.provide(NodeServices.layer), Effect.scoped);
 
 describe("DesktopConnectionCatalogStore", () => {
+  it.effect("does not read or write an existing legacy ~/.t3 catalog by default", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const homeDirectory = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "janus-desktop-state-isolation-test-",
+      });
+      const legacyCatalogPath = path.join(
+        homeDirectory,
+        ".t3",
+        "userdata",
+        "connection-catalog.json",
+      );
+      const legacyCatalog = "{not-a-janus-catalog}";
+      yield* fileSystem.makeDirectory(path.dirname(legacyCatalogPath), { recursive: true });
+      yield* fileSystem.writeFileString(legacyCatalogPath, legacyCatalog);
+
+      const store = yield* DesktopConnectionCatalogStore.DesktopConnectionCatalogStore.pipe(
+        Effect.provide(makeLayer(homeDirectory, true, null, NodeServices.layer, {})),
+      );
+      const environment = yield* DesktopEnvironment.DesktopEnvironment.pipe(
+        Effect.provide(
+          DesktopEnvironment.layer({
+            dirname: "/repo/apps/desktop/src",
+            homeDirectory,
+            platform: "darwin",
+            processArch: "arm64",
+            appVersion: "1.2.3",
+            appPath: "/repo",
+            isPackaged: true,
+            resourcesPath: "/missing/resources",
+            runningUnderArm64Translation: false,
+          }).pipe(Layer.provide(Layer.mergeAll(NodeServices.layer, DesktopConfig.layerTest({})))),
+        ),
+      );
+
+      assert.equal(environment.baseDir, path.join(homeDirectory, ".janus"));
+      assert.equal(environment.stateDir, path.join(homeDirectory, ".janus", "userdata"));
+      assert.deepEqual(yield* store.get, Option.none());
+      assert.isTrue(yield* store.set('{"schemaVersion":1,"targets":[]}'));
+      assert.equal(yield* fileSystem.readFileString(legacyCatalogPath), legacyCatalog);
+      assert.isTrue(
+        yield* fileSystem.exists(path.join(environment.stateDir, "connection-catalog.json")),
+      );
+    }).pipe(Effect.provide(NodeServices.layer), Effect.scoped),
+  );
+
   it.effect("persists, reads, and clears an encrypted connection catalog", () =>
     withStore(
       Effect.gen(function* () {

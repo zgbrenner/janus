@@ -617,6 +617,7 @@ interface StagePackageJson {
   readonly packageManager: string;
   readonly description: string;
   readonly author: string;
+  readonly copyright: string;
   readonly main: string;
   readonly build: Record<string, unknown>;
   readonly dependencies: Record<string, unknown>;
@@ -626,9 +627,14 @@ interface StagePackageJson {
 }
 
 export const STAGE_INSTALL_ARGS = ["install", "--prod"] as const;
+export const DESKTOP_STAGE_PACKAGE_IDENTITY = {
+  name: "janus",
+  author: "Janus contributors",
+  copyright: "Copyright © 2026 Janus contributors",
+} as const;
 export const DESKTOP_ELECTRON_LANGUAGES = ["en-US"] as const;
 export const DESKTOP_FILE_EXCLUSIONS = [
-  // T3 Code always passes the user's installed Claude executable to the SDK,
+  // Janus always passes the user's installed Claude executable to the SDK,
   // so the SDK's optional platform packages (each a ~200MB bundled executable)
   // are dead weight. The trailing dash keeps the SDK's own JS package.
   "!**/node_modules/@anthropic-ai/claude-agent-sdk-*/**/*",
@@ -1566,7 +1572,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       protocols: [
         {
           name: "Janus",
-          schemes: ["janus", "janus-dev"],
+          schemes: ["janus"],
         },
       ],
       ...(macPasskeySigning
@@ -1590,7 +1596,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       protocols: [
         {
           name: "Janus",
-          schemes: ["janus", "janus-dev"],
+          schemes: ["janus"],
         },
       ],
       desktop: {
@@ -1907,14 +1913,15 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
     stageDependencies,
   );
   const stagePackageJson: StagePackageJson = {
-    name: "t3code",
+    name: DESKTOP_STAGE_PACKAGE_IDENTITY.name,
     version: appVersion,
     buildVersion: appVersion,
     t3codeCommitHash: commitHash,
     private: true,
     packageManager: rootPackageJson.packageManager,
     description: "Janus desktop build",
-    author: "T3 Tools",
+    author: DESKTOP_STAGE_PACKAGE_IDENTITY.author,
+    copyright: DESKTOP_STAGE_PACKAGE_IDENTITY.copyright,
     main: "apps/desktop/dist-electron/main.cjs",
     build: yield* createBuildConfig(
       options.platform,
@@ -2137,7 +2144,7 @@ const buildDesktopArtifactCli = Command.make("build-desktop-artifact", {
     Flag.optional,
   ),
 }).pipe(
-  Command.withDescription("Build a desktop artifact for T3 Code."),
+  Command.withDescription("Build a desktop artifact for Janus."),
   Command.withHandler((input) => Effect.flatMap(resolveBuildOptions(input), buildDesktopArtifact)),
 );
 

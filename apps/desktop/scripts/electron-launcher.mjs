@@ -16,7 +16,7 @@ export const APP_DISPLAY_NAME = isDevelopment ? "Janus Dev" : "Janus";
 export const APP_BUNDLE_ID = isDevelopment ? "com.zgbrenner.janus.dev" : "com.zgbrenner.janus";
 const APP_PROTOCOL_SCHEMES = isDevelopment ? ["janus-dev"] : ["janus"];
 const LAUNCHER_VERSION = 14;
-const defaultIconPath = NodePath.join(desktopDir, "resources", "icon.icns");
+const productionMacIconPngPath = NodePath.join(repoRoot, "assets", "prod", "black-macos-1024.png");
 const developmentMacIconPngPath = NodePath.join(
   repoRoot,
   "assets",
@@ -160,15 +160,28 @@ function registerMacLauncherBundle(appBundlePath) {
   }
 }
 
-function ensureDevelopmentIconIcns(runtimeDir) {
-  const generatedIconPath = NodePath.join(runtimeDir, "icon-dev.icns");
+export function resolveMacIconPaths(isDevelopmentBuild = isDevelopment) {
+  return isDevelopmentBuild
+    ? {
+        sourcePngPath: developmentMacIconPngPath,
+        generatedIcnsFileName: "icon-dev.icns",
+      }
+    : {
+        sourcePngPath: productionMacIconPngPath,
+        generatedIcnsFileName: "icon.icns",
+      };
+}
+
+function ensureMacIconIcns(runtimeDir, { sourcePngPath, generatedIcnsFileName }) {
+  const generatedIconPath = NodePath.join(runtimeDir, generatedIcnsFileName);
   NodeFS.mkdirSync(runtimeDir, { recursive: true });
 
-  if (!NodeFS.existsSync(developmentMacIconPngPath)) {
-    return defaultIconPath;
+  if (!NodeFS.existsSync(sourcePngPath)) {
+    console.warn(`[desktop-launcher] Generated macOS icon source is unavailable: ${sourcePngPath}`);
+    return null;
   }
 
-  const sourceMtimeMs = NodeFS.statSync(developmentMacIconPngPath).mtimeMs;
+  const sourceMtimeMs = NodeFS.statSync(sourcePngPath).mtimeMs;
   if (
     NodeFS.existsSync(generatedIconPath) &&
     NodeFS.statSync(generatedIconPath).mtimeMs >= sourceMtimeMs
@@ -176,7 +189,7 @@ function ensureDevelopmentIconIcns(runtimeDir) {
     return generatedIconPath;
   }
 
-  const iconsetRoot = NodeFS.mkdtempSync(NodePath.join(runtimeDir, "dev-iconset-"));
+  const iconsetRoot = NodeFS.mkdtempSync(NodePath.join(runtimeDir, "janus-iconset-"));
   const iconsetDir = NodePath.join(iconsetRoot, "icon.iconset");
   NodeFS.mkdirSync(iconsetDir, { recursive: true });
 
@@ -186,7 +199,7 @@ function ensureDevelopmentIconIcns(runtimeDir) {
         "-z",
         String(size),
         String(size),
-        developmentMacIconPngPath,
+        sourcePngPath,
         "--out",
         NodePath.join(iconsetDir, `icon_${size}x${size}.png`),
       ]);
@@ -196,7 +209,7 @@ function ensureDevelopmentIconIcns(runtimeDir) {
         "-z",
         String(retinaSize),
         String(retinaSize),
-        developmentMacIconPngPath,
+        sourcePngPath,
         "--out",
         NodePath.join(iconsetDir, `icon_${size}x${size}@2x.png`),
       ]);
@@ -206,10 +219,10 @@ function ensureDevelopmentIconIcns(runtimeDir) {
     return generatedIconPath;
   } catch (error) {
     console.warn(
-      "[desktop-launcher] Failed to generate dev macOS icon, falling back to default icon.",
+      "[desktop-launcher] Failed to generate the macOS icon; keeping Electron's bundled fallback icon.",
       error,
     );
-    return defaultIconPath;
+    return null;
   } finally {
     NodeFS.rmSync(iconsetRoot, { recursive: true, force: true });
   }
@@ -221,7 +234,9 @@ function patchMainBundleInfoPlist(appBundlePath, iconPath, executableName) {
   setPlistString(infoPlistPath, "CFBundleName", APP_DISPLAY_NAME);
   setPlistString(infoPlistPath, "CFBundleIdentifier", APP_BUNDLE_ID);
   setPlistString(infoPlistPath, "CFBundleExecutable", executableName);
-  setPlistString(infoPlistPath, "CFBundleIconFile", "icon.icns");
+  if (iconPath !== null) {
+    setPlistString(infoPlistPath, "CFBundleIconFile", "icon.icns");
+  }
   setPlistJson(infoPlistPath, "CFBundleURLTypes", [
     {
       CFBundleURLName: APP_BUNDLE_ID,
@@ -230,8 +245,10 @@ function patchMainBundleInfoPlist(appBundlePath, iconPath, executableName) {
   ]);
 
   const resourcesDir = NodePath.join(appBundlePath, "Contents", "Resources");
-  NodeFS.copyFileSync(iconPath, NodePath.join(resourcesDir, "icon.icns"));
-  NodeFS.copyFileSync(iconPath, NodePath.join(resourcesDir, "electron.icns"));
+  if (iconPath !== null) {
+    NodeFS.copyFileSync(iconPath, NodePath.join(resourcesDir, "icon.icns"));
+    NodeFS.copyFileSync(iconPath, NodePath.join(resourcesDir, "electron.icns"));
+  }
 }
 
 function patchHelperBundleInfoPlists(appBundlePath) {
@@ -292,7 +309,7 @@ function buildMacLauncher(electronBinaryPath) {
   const launcherBinaryPath = isDevelopment
     ? developmentPaths.launcherBinaryPath
     : runtimeElectronBinaryPath;
-  const iconPath = isDevelopment ? ensureDevelopmentIconIcns(runtimeDir) : defaultIconPath;
+  const iconPath = ensureMacIconIcns(runtimeDir, resolveMacIconPaths());
   const metadataPath = NodePath.join(runtimeDir, "metadata.json");
 
   NodeFS.mkdirSync(runtimeDir, { recursive: true });
@@ -301,7 +318,7 @@ function buildMacLauncher(electronBinaryPath) {
     launcherVersion: LAUNCHER_VERSION,
     sourceAppBundlePath,
     sourceAppMtimeMs: NodeFS.statSync(sourceAppBundlePath).mtimeMs,
-    iconMtimeMs: NodeFS.statSync(iconPath).mtimeMs,
+    iconMtimeMs: iconPath === null ? null : NodeFS.statSync(iconPath).mtimeMs,
     appBundleId: APP_BUNDLE_ID,
     appProtocolSchemes: APP_PROTOCOL_SCHEMES,
   };
@@ -341,7 +358,7 @@ function buildMacLauncher(electronBinaryPath) {
   if (isDevelopment) {
     // Keep Electron's native executable inside the branded bundle. Launching the
     // node_modules copy makes macOS associate the process (and Dock label) with
-    // Electron.app even though this bundle's Info.plist has the T3 Code name.
+    // Electron.app even though this bundle's Info.plist has the Janus name.
     // Its conventional executable name also keeps Electron's default-app runtime
     // in development mode instead of making app.isPackaged report true.
     writeDevelopmentLauncherScript(launcherBinaryPath, runtimeElectronBinaryPath);

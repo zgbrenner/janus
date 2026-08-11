@@ -57,6 +57,7 @@ function makeEnvironmentLayer(
     readonly devServerUrl?: string;
     readonly platform?: NodeJS.Platform;
     readonly resourcesPath?: string;
+    readonly useImplicitJanusState?: boolean;
   },
 ) {
   return DesktopEnvironment.layer({
@@ -74,7 +75,7 @@ function makeEnvironmentLayer(
       Layer.mergeAll(
         NodeServices.layer,
         DesktopConfig.layerTest({
-          T3CODE_HOME: baseDir,
+          ...(options?.useImplicitJanusState ? {} : { T3CODE_HOME: baseDir }),
           T3CODE_PORT: "9999",
           T3CODE_MODE: "desktop",
           T3CODE_DESKTOP_LAN_HOST: "192.168.1.50",
@@ -122,6 +123,32 @@ const withHarness = <A, E, R>(
   }).pipe(Effect.scoped, Effect.provide(NodeServices.layer));
 
 describe("DesktopBackendConfiguration", () => {
+  it.effect("boots the default backend from ~/.janus without reading the legacy T3 home", () =>
+    Effect.gen(function* () {
+      const path = yield* Path.Path;
+      const configuration = yield* DesktopBackendConfiguration.DesktopBackendConfiguration;
+      const environment = yield* DesktopEnvironment.DesktopEnvironment;
+      const primary = yield* configuration.resolvePrimary;
+
+      assert.equal(environment.baseDir, path.join("/tmp/janus-home", ".janus"));
+      assert.equal(environment.stateDir, path.join("/tmp/janus-home", ".janus", "userdata"));
+      assert.equal(primary.bootstrap.t3Home, path.join("/tmp/janus-home", ".janus"));
+    }).pipe(
+      Effect.provide(
+        DesktopBackendConfiguration.layer.pipe(
+          Layer.provideMerge(serverExposureLayer),
+          Layer.provideMerge(DesktopAppSettings.layerTest()),
+          Layer.provideMerge(DesktopWslEnvironment.layerTest()),
+          Layer.provideMerge(
+            makeEnvironmentLayer("/tmp/janus-home", { useImplicitJanusState: true }),
+          ),
+          Layer.provideMerge(NodeServices.layer),
+        ),
+      ),
+      Effect.scoped,
+    ),
+  );
+
   it.effect("resolvePrimary produces a stable scoped bootstrap token", () =>
     withHarness(
       Effect.gen(function* () {

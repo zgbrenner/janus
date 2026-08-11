@@ -1,8 +1,11 @@
+import * as NodePath from "node:path";
 import { assert, describe, it } from "vite-plus/test";
 
 import {
+  desktopDir,
   makeDevelopmentLauncherScript,
   resolveElectronBinaryPath,
+  resolveMacIconPaths,
   resolveMacLauncherPaths,
 } from "./electron-launcher.mjs";
 
@@ -59,11 +62,21 @@ describe("electron development launcher", () => {
     assert.equal(paths.launcherExecutableName, "Janus Dev Launcher");
     assert.equal(
       paths.launcherBinaryPath,
-      "\\repo\\apps\\desktop\\.electron-runtime\\Janus Dev.app\\Contents\\MacOS\\Janus Dev Launcher",
+      NodePath.join(
+        "/repo/apps/desktop/.electron-runtime/Janus Dev.app",
+        "Contents",
+        "MacOS",
+        "Janus Dev Launcher",
+      ),
     );
     assert.equal(
       paths.runtimeElectronBinaryPath,
-      "\\repo\\apps\\desktop\\.electron-runtime\\Janus Dev.app\\Contents\\MacOS\\Electron",
+      NodePath.join(
+        "/repo/apps/desktop/.electron-runtime/Janus Dev.app",
+        "Contents",
+        "MacOS",
+        "Electron",
+      ),
     );
 
     const script = makeDevelopmentLauncherScript({
@@ -74,5 +87,26 @@ describe("electron development launcher", () => {
     });
     assert.include(script, `exec '${paths.runtimeElectronBinaryPath}'`);
     assert.notInclude(script, "node_modules/electron");
+  });
+
+  it("derives production and development ICNS files from generated Janus PNG assets", () => {
+    assert.deepEqual(resolveMacIconPaths(false), {
+      sourcePngPath: NodePath.join(
+        NodePath.resolve(desktopDir, "..", ".."),
+        "assets",
+        "prod",
+        "black-macos-1024.png",
+      ),
+      generatedIcnsFileName: "icon.icns",
+    });
+    assert.deepEqual(resolveMacIconPaths(true), {
+      sourcePngPath: NodePath.join(
+        NodePath.resolve(desktopDir, "..", ".."),
+        "assets",
+        "dev",
+        "blueprint-macos-1024.png",
+      ),
+      generatedIcnsFileName: "icon-dev.icns",
+    });
   });
 });
