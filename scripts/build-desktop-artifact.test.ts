@@ -7,6 +7,7 @@ import * as Option from "effect/Option";
 import * as Sink from "effect/Sink";
 import * as Stream from "effect/Stream";
 import { ChildProcessSpawner } from "effect/unstable/process";
+import { parseDocument } from "yaml";
 
 import {
   BuildCommandFailedError,
@@ -41,6 +42,8 @@ import {
   resolveMockUpdateServerPort,
   resolveMockUpdateServerUrl,
   resolvePackageManagerUserAgent,
+  normalizeLinuxX64ArtifactName,
+  normalizeLinuxX64Manifest,
   stageLinuxIconSize,
   STAGE_INSTALL_ARGS,
   WINDOWS_ASAR_UNPACK,
@@ -54,6 +57,43 @@ it("uses the Janus identity for staged package and native executable metadata", 
     author: "Janus contributors",
     copyright: "Copyright © 2026 Janus contributors",
   });
+});
+
+it("normalizes electron-builder Linux x64 outputs to the public artifact contract", () => {
+  const version = "0.0.1";
+  const builderArtifact = `Janus-${version}-x86_64.AppImage`;
+  const publicArtifact = `Janus-${version}-x64.AppImage`;
+  const builderManifest = `version: ${version}
+files:
+  - url: ${builderArtifact}
+    sha512: linux-sha512
+    size: 125621344
+path: ${builderArtifact}
+sha512: linux-sha512
+releaseDate: '2026-08-11T00:00:00.000Z'
+`;
+
+  const stagedNames = [builderArtifact, "latest-linux.yml", "builder-debug.yml"].flatMap(
+    (name) => normalizeLinuxX64ArtifactName(name, version) ?? [],
+  );
+  const normalizedManifest = normalizeLinuxX64Manifest(builderManifest, version);
+  const manifest = parseDocument(normalizedManifest).toJS() as {
+    readonly files: ReadonlyArray<{
+      readonly url: string;
+      readonly sha512: string;
+      readonly size: number;
+    }>;
+    readonly path: string;
+    readonly sha512: string;
+  };
+
+  assert.deepStrictEqual(stagedNames, [publicArtifact, "latest-linux.yml"]);
+  assert.deepStrictEqual(manifest.files, [
+    { url: publicArtifact, sha512: "linux-sha512", size: 125621344 },
+  ]);
+  assert.equal(manifest.path, publicArtifact);
+  assert.equal(manifest.sha512, "linux-sha512");
+  assert.notInclude(normalizedManifest, "x86_64");
 });
 
 function mockProcess(exitCode: number) {

@@ -33,10 +33,50 @@ import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 import { Command, Flag } from "effect/unstable/cli";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { parseDocument, stringify } from "yaml";
 
 const LINUX_ICON_SIZES = [16, 22, 24, 32, 48, 64, 128, 256, 512] as const;
 const DESKTOP_APP_ID = "com.zgbrenner.janus";
 const APPLE_TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/u;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function normalizeLinuxX64ArtifactName(name: string, version: string): string | undefined {
+  if (name === "builder-debug.yml") return undefined;
+
+  const builderArtifact = `Janus-${version}-x86_64.AppImage`;
+  const publicArtifact = `Janus-${version}-x64.AppImage`;
+  return name === builderArtifact ? publicArtifact : name;
+}
+
+export function normalizeLinuxX64Manifest(manifestText: string, version: string): string {
+  const builderArtifact = `Janus-${version}-x86_64.AppImage`;
+  const publicArtifact = `Janus-${version}-x64.AppImage`;
+  const document = parseDocument(manifestText);
+  if (document.errors.length > 0) {
+    throw new Error(
+      `Linux updater manifest is invalid YAML: ${document.errors.map((error) => error.message).join("; ")}`,
+    );
+  }
+
+  const manifest = document.toJS();
+  if (!isRecord(manifest) || !Array.isArray(manifest.files) || manifest.files.length !== 1) {
+    throw new Error("Linux updater manifest must describe exactly one AppImage.");
+  }
+
+  const [file] = manifest.files;
+  if (!isRecord(file) || file.url !== builderArtifact || manifest.path !== builderArtifact) {
+    throw new Error(`Linux updater manifest must reference ${builderArtifact}.`);
+  }
+
+  return stringify({
+    ...manifest,
+    files: [{ ...file, url: publicArtifact }],
+    path: publicArtifact,
+  });
+}
 
 const BuildPlatform = Schema.Literals(["mac", "linux", "win"]);
 const BuildArch = Schema.Literals(["arm64", "x64", "universal"]);
@@ -2063,12 +2103,25 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
 
   const copiedArtifacts: string[] = [];
   for (const entry of stageEntries) {
+    const outputName =
+      options.platform === "linux" && options.arch === "x64"
+        ? normalizeLinuxX64ArtifactName(entry, appVersion)
+        : entry === "builder-debug.yml"
+          ? undefined
+          : entry;
+    if (outputName === undefined) continue;
+
     const from = path.join(stageDistDir, entry);
     const stat = yield* fs.stat(from).pipe(Effect.orElseSucceed(() => null));
     if (!stat || stat.type !== "File") continue;
 
-    const to = path.join(options.outputDir, entry);
-    yield* fs.copyFile(from, to);
+    const to = path.join(options.outputDir, outputName);
+    if (options.platform === "linux" && options.arch === "x64" && entry === "latest-linux.yml") {
+      const manifestText = yield* fs.readFileString(from);
+      yield* fs.writeFileString(to, normalizeLinuxX64Manifest(manifestText, appVersion));
+    } else {
+      yield* fs.copyFile(from, to);
+    }
     copiedArtifacts.push(to);
   }
 
