@@ -216,6 +216,11 @@ try {
     NodePath.resolve(repoRoot, ".github/workflows/security.yml"),
   );
   assertRecord(securityWorkflow.on, "Security workflow must define triggers.");
+  assertEqual(
+    Object.hasOwn(securityWorkflow.on, "pull_request"),
+    true,
+    "Security workflow must scan pull requests.",
+  );
   assertRecord(securityWorkflow.on.push, "Security workflow must scan main pushes.");
   assertEqual(
     JSON.stringify(securityWorkflow.on.push.branches),
@@ -244,6 +249,12 @@ try {
     "write",
     "CodeQL must upload security results.",
   );
+  assertRecord(securityWorkflow.permissions, "Security workflow must declare permissions.");
+  assertEqual(
+    JSON.stringify(Object.keys(securityWorkflow.permissions).toSorted()),
+    JSON.stringify(["contents"]),
+    "Security workflow must default to read-only contents.",
+  );
   for (const action of ["github/codeql-action/init@v4", "github/codeql-action/analyze@v4"]) {
     assertEqual(
       hasStep(steps(codeqlJob), (step) => step.uses === action),
@@ -251,9 +262,19 @@ try {
       `CodeQL must use ${action}.`,
     );
   }
+  const dependencyReviewJob = job(securityWorkflow, "dependency_review");
+  assertRecord(
+    dependencyReviewJob.permissions,
+    "Dependency review must declare least-privilege permissions.",
+  );
+  assertEqual(
+    JSON.stringify(Object.keys(dependencyReviewJob.permissions).toSorted()),
+    JSON.stringify(["contents"]),
+    "Dependency review must only read contents.",
+  );
   assertEqual(
     hasStep(
-      steps(job(securityWorkflow, "dependency_review")),
+      steps(dependencyReviewJob),
       (step) => step.uses === "actions/dependency-review-action@v4",
     ),
     true,
@@ -302,14 +323,11 @@ try {
     JSON.stringify("preflight"),
     "WSL terminal module must wait for preflight.",
   );
-  assertEqual(
-    hasStep(
-      steps(wslBuild),
-      (step) => step.uses === "actions/upload-artifact@v7" && step.with !== undefined,
-    ),
-    true,
-    "WSL terminal module must be handed to Windows through upload-artifact v7.",
-  );
+  const wslUpload = steps(wslBuild).find((step) => step.uses === "actions/upload-artifact@v7");
+  assertRecord(wslUpload, "WSL terminal module must use upload-artifact v7.");
+  assertRecord(wslUpload.with, "WSL terminal module upload must declare its artifact path.");
+  assertEqual(wslUpload.with.name, "wsl-node-pty-x64", "WSL upload name must be stable.");
+  assertEqual(wslUpload.with.path, "wsl-prebuild/pty.node", "WSL upload path must be stable.");
   const build = job(releaseWorkflow, "build");
   assertRecord(build.strategy, "Release build must use a platform matrix.");
   assertRecord(build.strategy.matrix, "Release build must use a platform matrix.");
@@ -350,6 +368,11 @@ try {
   );
   const buildSteps = steps(build);
   assertEqual(
+    JSON.stringify(build.needs),
+    JSON.stringify(["preflight", "build_wsl_node_pty"]),
+    "Windows packaging must wait for the WSL terminal module build.",
+  );
+  assertEqual(
     hasStep(buildSteps, (step) => step.name === "Stage macOS updater manifest"),
     true,
     "Each macOS build must stage a deterministic updater-manifest name.",
@@ -365,11 +388,12 @@ try {
     true,
     "macOS x64 must rename the builder's common updater manifest before upload.",
   );
-  assertEqual(
-    hasStep(buildSteps, (step) => step.uses === "actions/download-artifact@v8"),
-    true,
-    "Windows packaging must download the Linux WSL terminal module with download-artifact v8.",
-  );
+  const wslDownload = buildSteps.find((step) => step.uses === "actions/download-artifact@v8");
+  assertRecord(wslDownload, "Windows packaging must use download-artifact v8 for the WSL module.");
+  assertRecord(wslDownload.with, "WSL download must declare its artifact path.");
+  assertEqual(wslDownload.if, "matrix.platform == 'win'", "WSL download must be Windows-only.");
+  assertEqual(wslDownload.with.name, "wsl-node-pty-x64", "WSL download name must match upload.");
+  assertEqual(wslDownload.with.path, "wsl-prebuild", "WSL download path must be stable.");
   assertEqual(
     hasStep(
       buildSteps,
@@ -389,6 +413,17 @@ try {
     ),
     true,
     "Linux packaging must produce its updater manifest.",
+  );
+  assertEqual(
+    hasStep(
+      buildSteps,
+      (step) =>
+        typeof step.run === "string" &&
+        step.run.includes('.dmg.blockmap"') &&
+        step.run.includes('.zip.blockmap"'),
+    ),
+    true,
+    "macOS packaging must require both external blockmaps for every architecture.",
   );
   assertEqual(
     hasStep(buildSteps, (step) => step.uses === "actions/upload-artifact@v7"),
@@ -425,12 +460,35 @@ try {
     "Release must validate the final asset set before checksums.",
   );
   const releaseSteps = steps(release);
+  const finalSetupIndex = releaseSteps.findIndex(
+    (step) => step.uses === "voidzero-dev/setup-vp@v1",
+  );
+  const finalInstallIndex = releaseSteps.findIndex(
+    (step) => step.run === "vp install --frozen-lockfile",
+  );
+  const mergeIndex = releaseSteps.findIndex(
+    (step) => step.name === "Merge macOS updater manifests",
+  );
   const validationIndex = releaseSteps.findIndex((step) => step.name === "Validate release assets");
   const checksumIndex = releaseSteps.findIndex((step) => step.name === "Create checksums");
+  const attestIndex = releaseSteps.findIndex((step) => step.uses === "actions/attest@v4");
+  const publishIndex = releaseSteps.findIndex(
+    (step) => step.uses === "softprops/action-gh-release@v3",
+  );
+  assertEqual(
+    0 <= finalSetupIndex && finalSetupIndex < finalInstallIndex && finalInstallIndex < mergeIndex,
+    true,
+    "Final release must set up Vite+ and install locked dependencies before repo scripts.",
+  );
   assertEqual(
     validationIndex < checksumIndex,
     true,
     "Release must validate assets before computing SHA256SUMS.txt.",
+  );
+  assertEqual(
+    checksumIndex < attestIndex && attestIndex < publishIndex && validationIndex < attestIndex,
+    true,
+    "Release validation must complete before checksums, attestations, and publication.",
   );
   assertEqual(
     hasStep(releaseSteps, (step) => step.uses === "actions/attest@v4"),

@@ -27,6 +27,10 @@ function expectedArtifactNames(version: string): ReadonlyArray<string> {
     `Janus-${version}-x64.AppImage`,
     `Janus-${version}-x64.exe`,
     `Janus-${version}-x64.exe.blockmap`,
+    `Janus-${version}-arm64.dmg.blockmap`,
+    `Janus-${version}-arm64.zip.blockmap`,
+    `Janus-${version}-x64.dmg.blockmap`,
+    `Janus-${version}-x64.zip.blockmap`,
   ];
 }
 

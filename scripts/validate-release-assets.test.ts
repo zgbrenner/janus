@@ -17,6 +17,10 @@ const artifactNames = [
   `Janus-${version}-x64.AppImage`,
   `Janus-${version}-x64.exe`,
   `Janus-${version}-x64.exe.blockmap`,
+  `Janus-${version}-arm64.dmg.blockmap`,
+  `Janus-${version}-arm64.zip.blockmap`,
+  `Janus-${version}-x64.dmg.blockmap`,
+  `Janus-${version}-x64.zip.blockmap`,
 ] as const;
 
 function sha512(content: string): string {
@@ -78,6 +82,80 @@ describe("validate-release-assets", () => {
       const installerPath = NodePath.join(assetsDir, artifactNames[5]);
       NodeFS.writeFileSync(installerPath, "x".repeat(NodeFS.statSync(installerPath).size));
       assert.throws(() => validateReleaseAssets({ assetsDir, version }), /SHA-512 mismatch/);
+    } finally {
+      NodeFS.rmSync(assetsDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an updater manifest with a different version", () => {
+    const assetsDir = writeFixture();
+    try {
+      const manifestPath = NodePath.join(assetsDir, "latest-linux.yml");
+      NodeFS.writeFileSync(
+        manifestPath,
+        NodeFS.readFileSync(manifestPath, "utf8").replace(`version: ${version}`, "version: 9.9.9"),
+      );
+      assert.throws(() => validateReleaseAssets({ assetsDir, version }), /version mismatch/);
+    } finally {
+      NodeFS.rmSync(assetsDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an updater manifest with an unexpected URL set", () => {
+    const assetsDir = writeFixture();
+    try {
+      const manifestPath = NodePath.join(assetsDir, "latest-linux.yml");
+      NodeFS.writeFileSync(
+        manifestPath,
+        `version: ${version}\nfiles:\n${manifestEntry(`Janus-${version}-wrong.AppImage`, "wrong")}releaseDate: '2026-08-11T00:00:00.000Z'\n`,
+      );
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir, version }),
+        /does not describe exactly/,
+      );
+    } finally {
+      NodeFS.rmSync(assetsDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects updater metadata with a stale size", () => {
+    const assetsDir = writeFixture();
+    try {
+      NodeFS.appendFileSync(NodePath.join(assetsDir, artifactNames[4]), "larger");
+      assert.throws(() => validateReleaseAssets({ assetsDir, version }), /size mismatch/);
+    } finally {
+      NodeFS.rmSync(assetsDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects missing and empty required release files", () => {
+    const missingAssetsDir = writeFixture();
+    const emptyAssetsDir = writeFixture();
+    try {
+      NodeFS.rmSync(NodePath.join(missingAssetsDir, artifactNames[0]));
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir: missingAssetsDir, version }),
+        /Missing or empty release file/,
+      );
+      NodeFS.writeFileSync(NodePath.join(emptyAssetsDir, artifactNames[1]), "");
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir: emptyAssetsDir, version }),
+        /Missing or empty release file/,
+      );
+    } finally {
+      NodeFS.rmSync(missingAssetsDir, { recursive: true, force: true });
+      NodeFS.rmSync(emptyAssetsDir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects directories in the flat release asset set", () => {
+    const assetsDir = writeFixture();
+    try {
+      NodeFS.mkdirSync(NodePath.join(assetsDir, "stage"));
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir, version }),
+        /Unexpected release entry/,
+      );
     } finally {
       NodeFS.rmSync(assetsDir, { recursive: true, force: true });
     }

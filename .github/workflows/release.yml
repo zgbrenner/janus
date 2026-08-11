@@ -174,7 +174,9 @@ jobs:
           case "${{ matrix.platform }}" in
             mac)
               test -s "release-publish/Janus-${version}-${{ matrix.arch }}.dmg"
+              test -s "release-publish/Janus-${version}-${{ matrix.arch }}.dmg.blockmap"
               test -s "release-publish/Janus-${version}-${{ matrix.arch }}.zip"
+              test -s "release-publish/Janus-${version}-${{ matrix.arch }}.zip.blockmap"
               if [[ "${{ matrix.arch }}" == "arm64" ]]; then
                 test -s release-publish/latest-mac.yml
               else
@@ -211,6 +213,11 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version-file: package.json
+          cache: true
+      - run: vp install --frozen-lockfile
       - uses: actions/download-artifact@v8
         with:
           pattern: desktop-*

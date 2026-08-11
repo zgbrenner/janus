@@ -26,7 +26,7 @@ Janus releases are GitHub-only desktop prototype builds. We do not operate relea
 
 3. Wait for the `Release` workflow. Its preflight repeats the quality gates and release smoke, validates `vX.Y.Z`, builds macOS arm64/x64, Linux x64, and Windows x64 on GitHub-hosted runners, and publishes one `Janus vX.Y.Z` GitHub Release.
 
-4. Verify that the release contains the four platform artifacts, merged `latest-mac.yml`, `latest-linux.yml`, Windows `latest.yml`, blockmap metadata, `SHA256SUMS.txt`, and GitHub attestations. The workflow rejects missing, empty, unexpected, version-mismatched, or digest-mismatched release files before computing checksums or publishing.
+4. Verify that the release contains the four platform artifacts, four macOS external blockmaps, the Windows installer blockmap, merged `latest-mac.yml`, `latest-linux.yml`, Windows `latest.yml`, `SHA256SUMS.txt`, and GitHub attestations. The workflow rejects missing, empty, unexpected, version-mismatched, or digest-mismatched release files before computing checksums or publishing.
 
 The Windows build receives the Linux x64 `node-pty` prebuild generated on Ubuntu, so its WSL backend does not need to compile on a user's machine. This still requires a glibc-based x64 WSL distribution.
 
