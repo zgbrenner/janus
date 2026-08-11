@@ -2652,7 +2652,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     <form
       ref={composerFormRef}
       onSubmit={submitComposer}
-      className="mx-auto w-full min-w-0 max-w-3xl"
+      className="janus-composer mx-auto w-full min-w-0 max-w-3xl"
       data-chat-composer-form="true"
     >
       <div
@@ -3051,7 +3051,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                             ? "Enable a provider in Settings to send a message"
                             : phase === "disconnected"
                               ? "Ask for follow-up changes or attach images"
-                              : "Ask anything, @tag files/folders, $use skills, or / for commands"
+                              : "Describe what you want to accomplish. Use @ for files, $ for skills, or / for commands."
                 }
                 disabled={isConnecting || isComposerApprovalState || projectSelectionRequired}
               />

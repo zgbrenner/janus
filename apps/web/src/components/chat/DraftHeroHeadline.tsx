@@ -23,15 +23,18 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "../ui/menu";
+import { TaskStarterPrompts } from "./TaskStarterPrompts";
 
 interface DraftHeroHeadlineProps {
   readonly activeProjectRef: ScopedProjectRef | null;
   readonly activeProjectTitle: string | null;
+  readonly onStarterSelect: (prompt: string) => void;
 }
 
 export function DraftHeroHeadline({
   activeProjectRef,
   activeProjectTitle,
+  onStarterSelect,
 }: DraftHeroHeadlineProps) {
   const projects = useProjects();
   const threads = useThreadShells();
@@ -148,14 +151,20 @@ export function DraftHeroHeadline({
   );
 
   return (
-    <h1 className="mx-auto w-full max-w-5xl text-center font-normal text-2xl text-foreground tracking-tight sm:text-3xl">
-      {hasResolvedProject ? (
-        <>What should we build in {projectSelector}?</>
-      ) : canChooseProject ? (
-        <>{projectSelector} to start</>
-      ) : (
-        <>Add a project to start</>
-      )}
-    </h1>
+    <section className="janus-task-hero mx-auto w-full max-w-3xl text-center">
+      <h1 className="text-balance font-semibold text-3xl text-foreground tracking-[-0.035em] sm:text-4xl">
+        {hasResolvedProject ? (
+          <>What would you like to accomplish in {projectSelector}?</>
+        ) : canChooseProject ? (
+          <>Choose a workspace to begin</>
+        ) : (
+          <>Add a workspace to begin</>
+        )}
+      </h1>
+      <p className="mx-auto mt-3 max-w-2xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
+        Janus can work with files, research, documents, data, and code in your selected workspace.
+      </p>
+      <TaskStarterPrompts onSelect={onStarterSelect} />
+    </section>
   );
 }

@@ -1319,6 +1319,14 @@ function ChatViewContent(props: ChatViewProps) {
   const composerElementContextsRef = useRef<ElementContextDraft[]>([]);
   const localComposerRef = useRef<ChatComposerHandle | null>(null);
   const composerRef = useComposerHandleContext() ?? localComposerRef;
+  const selectTaskStarter = useCallback(
+    (prompt: string) => {
+      setComposerDraftPrompt(composerDraftTarget, prompt);
+      composerRef.current?.resetCursorState({ cursor: prompt.length, prompt });
+      requestAnimationFrame(() => composerRef.current?.focusAtEnd());
+    },
+    [composerDraftTarget, composerRef, setComposerDraftPrompt],
+  );
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [expandedImage, setExpandedImage] = useState<ExpandedImagePreview | null>(null);
   const [optimisticUserMessages, setOptimisticUserMessages] = useState<ChatMessage[]>([]);
@@ -6089,7 +6097,7 @@ function ChatViewContent(props: ChatViewProps) {
   ) : null;
 
   return (
-    <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
+    <div className="janus-conversation relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background">
       {rightPanelOpen && !shouldUseRightPanelSheet ? panelLayoutControls : null}
       <div
         className={cn(
@@ -6253,6 +6261,7 @@ function ChatViewContent(props: ChatViewProps) {
                         <DraftHeroHeadline
                           activeProjectRef={activeProjectRef}
                           activeProjectTitle={activeProject?.title ?? null}
+                          onStarterSelect={selectTaskStarter}
                         />
                       </div>
                       <ComposerBannerStack className="relative z-0" items={composerBannerItems} />

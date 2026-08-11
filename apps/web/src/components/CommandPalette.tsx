@@ -517,7 +517,7 @@ function CommandPaletteDialog(props: {
           ? "File picker"
           : props.mode === "content"
             ? "Search project contents"
-            : "Command palette"
+            : "Quick actions"
       }
       className={cn("overflow-hidden p-0", props.mode === "content" && "h-105")}
       data-command-palette="true"
@@ -1381,7 +1381,7 @@ function OpenCommandPaletteDialog(props: {
         searchTerms: ["new thread", "chat", "create", "draft"],
         title: (
           <>
-            New thread in <span className="font-semibold">{activeProjectTitle}</span>
+            New task in <span className="font-semibold">{activeProjectTitle}</span>
           </>
         ),
         icon: <SquarePenIcon className={ITEM_ICON_CLASS} />,
@@ -1401,10 +1401,10 @@ function OpenCommandPaletteDialog(props: {
       kind: "submenu",
       value: "action:new-thread-in",
       searchTerms: ["new thread", "project", "pick", "choose", "select"],
-      title: "New thread in...",
+      title: "New task in...",
       icon: <SquarePenIcon className={ITEM_ICON_CLASS} />,
       addonIcon: <SquarePenIcon className={ADDON_ICON_CLASS} />,
-      groups: [{ value: "projects", label: "Projects", items: projectThreadItems }],
+      groups: [{ value: "projects", label: "Workspaces", items: projectThreadItems }],
     });
   }
 

@@ -21,6 +21,7 @@ import {
   subscribeToThemePreview,
   subscribeToCustomThemes,
   T3_CHAT_THEME,
+  T3_CHAT_THEME_LABEL,
   EMBER_THEME,
   GROVE_THEME,
   IRIS_THEME,
@@ -50,6 +51,18 @@ function contrastRatio(first: string, second: string): number {
 }
 
 describe("theme files", () => {
+  it("presents the compatible t3-chat preset as Janus with the paper and forest palette", () => {
+    expect(T3_CHAT_THEME_LABEL).toBe("Janus");
+    expect(T3_CHAT_THEME.colors).toMatchObject({
+      canvas: "#f7f3ea",
+      messageAction: "#3d6b4d",
+    });
+    expect(T3_CHAT_THEME.variants?.dark).toMatchObject({
+      canvas: "#20261f",
+      messageAction: "#a4d4a8",
+    });
+  });
+
   it("derives a readable palette from extreme simple-editor colors", () => {
     const light = createManagedThemeColors("light", "#111827", "#ffff00");
     const dark = createManagedThemeColors("dark", "#ffffff", "#ffff00");
@@ -171,7 +184,7 @@ describe("theme files", () => {
       colors: {
         canvas: "#07152f",
         accent: "#67c2ff",
-        placeholder: "#968d9f",
+        placeholder: "#bcc6b9",
       },
     });
   });
@@ -277,33 +290,33 @@ describe("theme files", () => {
     });
   });
 
-  it("keeps the T3 Chat palette faithful and readable", () => {
+  it("keeps the Janus palette warm and readable", () => {
     expect(T3_CHAT_THEME.colors).toMatchObject({
-      canvas: "#fdf7fd",
-      chrome: "#fdf7fd",
-      toolbarBorder: "#efbdeb",
-      toolbarControl: "#f3e6f5",
-      toolbarControlHover: "#eccfe3",
-      surfaceRaised: "#fdfafd",
-      input: "#e7c1dc",
-      focus: "#db2777",
-      messageSurface: "#f7def2",
-      codeBackground: "#f5ecf9",
-      codeForeground: "#673c8b",
-      accentSurface: "#f3e6f5",
-      sidebar: "#f2e1f4",
+      canvas: "#f7f3ea",
+      chrome: "#f7f3ea",
+      toolbarBorder: "#ded7ca",
+      toolbarControl: "#ece7dc",
+      toolbarControlHover: "#dedbce",
+      surfaceRaised: "#fffdf7",
+      input: "#c9c3b6",
+      focus: "#3d6b4d",
+      messageSurface: "#e4ece1",
+      codeBackground: "#f1ede3",
+      codeForeground: "#344437",
+      accentSurface: "#e0ecdf",
+      sidebar: "#eee9df",
     });
     expect(T3_CHAT_THEME.variants?.dark).toMatchObject({
-      canvas: "#1f1a24",
-      chrome: "#1f1a24",
-      surface: "#29232d",
-      surfaceRaised: "#2c2631",
-      input: "#302029",
-      focus: "#db2777",
-      messageSurface: "#2b2431",
-      codeBackground: "#1f1a24",
-      sidebar: "#171018",
-      sidebarBorder: "#322028",
+      canvas: "#20261f",
+      chrome: "#20261f",
+      surface: "#293129",
+      surfaceRaised: "#2e372e",
+      input: "#435043",
+      focus: "#a4d4a8",
+      messageSurface: "#2e3a2e",
+      codeBackground: "#171d17",
+      sidebar: "#1b211b",
+      sidebarBorder: "#344034",
     });
 
     for (const mode of ["light", "dark"] as const) {

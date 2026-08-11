@@ -15,10 +15,10 @@ import {
   useThreadShells,
 } from "../state/entities";
 import { useEnvironments } from "../state/environments";
-import { APP_DISPLAY_NAME } from "~/branding";
 import { hasCloudPublicConfig } from "~/cloud/publicConfig";
 import { cn } from "~/lib/utils";
 import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "~/workspaceTitlebar";
+import { JanusMark } from "~/components/brand/JanusMark";
 
 function ChatIndexRouteView() {
   const { authGateState } = Route.useRouteContext();
@@ -114,15 +114,15 @@ function NoProjectsHero() {
           <div className="w-full max-w-lg px-8 py-12">
             <EmptyHeader className="max-w-none">
               <EmptyTitle className="text-foreground text-2xl sm:text-3xl">
-                What should we work on?
+                Choose a workspace to begin
               </EmptyTitle>
               <EmptyDescription className="mt-2 text-sm text-muted-foreground/78">
-                Add a project to start your first thread.
+                Add a workspace, then describe the outcome you want Janus to help with.
               </EmptyDescription>
               <div className="mt-6 flex justify-center">
                 <Button size="sm" onClick={openAddProject}>
                   <PlusIcon className="size-4" />
-                  Add project
+                  Add workspace
                 </Button>
               </div>
             </EmptyHeader>
@@ -150,9 +150,7 @@ function HostedStaticOnboardingState() {
           )}
         >
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground md:text-muted-foreground/60">
-              {APP_DISPLAY_NAME}
-            </span>
+            <JanusMark showWordmark className="flex items-center gap-1.5 text-sm text-foreground" />
           </div>
         </header>
 
@@ -163,17 +161,17 @@ function HostedStaticOnboardingState() {
                 <LinkIcon className="size-5" />
               </div>
               <EmptyTitle className="text-foreground text-xl">
-                Connect an environment to get started
+                Connect a workspace to get started
               </EmptyTitle>
               <EmptyDescription className="mt-2 text-sm leading-relaxed text-muted-foreground/78">
                 {cloudEnabled
-                  ? "Sign in to T3 Connect to connect a linked environment through its managed tunnel, or add a reachable backend manually."
-                  : "Add a reachable backend manually to start working from this browser."}
+                  ? "Sign in to connect a linked workspace through its managed tunnel, or add a reachable backend manually."
+                  : "Add a reachable workspace backend to start working from this browser."}
               </EmptyDescription>
               <div className="mt-6 flex justify-center">
                 <Button render={<Link to="/settings/connections" />} size="sm">
                   <PlusIcon className="size-4" />
-                  {cloudEnabled ? "Open Connections" : "Add environment"}
+                  {cloudEnabled ? "Open Connections" : "Add workspace"}
                 </Button>
               </div>
             </EmptyHeader>

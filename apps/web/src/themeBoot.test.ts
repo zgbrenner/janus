@@ -150,12 +150,12 @@ describe("index.html boot script", () => {
   }> = [
     { name: "no stored preference on a dark OS", storage: {}, prefersDark: true },
     {
-      name: "T3 Chat follows a dark OS",
+      name: "Janus follows a dark OS",
       storage: { [THEME_STORAGE_KEY]: "t3-chat", [THEME_FOLLOW_SYSTEM_STORAGE_KEY]: "true" },
       prefersDark: true,
     },
     {
-      name: "an explicit global dark mode applies to T3 Chat",
+      name: "an explicit global dark mode applies to Janus",
       storage: {
         [THEME_STORAGE_KEY]: "t3-chat",
         [THEME_APPEARANCE_MODE_STORAGE_KEY]: "dark",
@@ -189,7 +189,7 @@ describe("index.html boot script", () => {
       prefersDark: true,
     },
     {
-      name: "legacy t3-chat-dark resolves to dark T3 Chat",
+      name: "legacy t3-chat-dark resolves to dark Janus",
       storage: { [THEME_STORAGE_KEY]: "t3-chat-dark" },
       prefersDark: true,
     },
@@ -410,9 +410,9 @@ describe("index.html boot script", () => {
     });
 
     expect(boot.themeId).toBe("partial");
-    expect(boot.bootVariables["--boot-background"]).toBe("#1f1a24");
+    expect(boot.bootVariables["--boot-background"]).toBe("#20261f");
     expect(boot.bootVariables["--boot-foreground"]).toBe("#fffaff");
-    expect(boot.bootVariables["--boot-accent"]).toBe("#a3004c");
+    expect(boot.bootVariables["--boot-accent"]).toBe("#a4d4a8");
     expect(boot.backgroundColor).toBe(DEFAULT_DARK_CHROME);
     expect(boot.metaContent).toBe(DEFAULT_DARK_CHROME);
   });

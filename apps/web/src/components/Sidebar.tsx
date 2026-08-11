@@ -3211,7 +3211,7 @@ export default function Sidebar() {
                   }}
                   onKeyDown={handleThreadSearchKeyDown}
                   placeholder="Search"
-                  aria-label="Search threads"
+                  aria-label="Search tasks"
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={isSearchingThreads && threadSearchResults.length > 0}
@@ -3253,7 +3253,7 @@ export default function Sidebar() {
                         className="relative focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                         onClick={handleNewThreadClick}
                         disabled={projects.length === 0}
-                        aria-label="New thread"
+                        aria-label="New task"
                       />
                     }
                   >
@@ -3264,9 +3264,7 @@ export default function Sidebar() {
                     />
                   </TooltipTrigger>
                   <TooltipPopup side="right">
-                    {newThreadShortcutLabel
-                      ? `New thread (${newThreadShortcutLabel})`
-                      : "New thread"}
+                    {newThreadShortcutLabel ? `New task (${newThreadShortcutLabel})` : "New task"}
                   </TooltipPopup>
                 </Tooltip>
               </div>
@@ -3277,7 +3275,7 @@ export default function Sidebar() {
                   <MenuTrigger
                     render={
                       <SidebarMenuButton
-                        aria-label="Filter threads by project"
+                        aria-label="Filter tasks by workspace"
                         className="min-w-0 flex-1 ps-[calc(var(--sidebar-row-content-inset)-1px)] focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                       />
                     }
@@ -3293,7 +3291,7 @@ export default function Sidebar() {
                       <FolderIcon className="size-4 shrink-0" />
                     )}
                     <span className="min-w-0 flex-1 truncate">
-                      {scopedProjectGroup?.displayName ?? "All projects"}
+                      {scopedProjectGroup?.displayName ?? "All workspaces"}
                     </span>
                     <ChevronDownIcon className="-mr-px size-4 shrink-0" />
                   </MenuTrigger>
@@ -3310,7 +3308,7 @@ export default function Sidebar() {
                         className="h-8 min-h-8 px-1 py-0 text-sm font-medium [&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2"
                       >
                         <FolderIcon className="size-4 shrink-0" />
-                        <span className="min-w-0 truncate text-sm">All projects</span>
+                        <span className="min-w-0 truncate text-sm">All workspaces</span>
                       </MenuRadioItem>
                       {projectGroups.map((project) => {
                         const scopeKey = project.projectKey;
@@ -3330,8 +3328,8 @@ export default function Sidebar() {
                             <span className="min-w-0 truncate text-sm">{project.displayName}</span>
                             <button
                               type="button"
-                              aria-label={`Project settings for ${project.displayName}`}
-                              title={`Project settings for ${project.displayName}`}
+                              aria-label={`Workspace settings for ${project.displayName}`}
+                              title={`Workspace settings for ${project.displayName}`}
                               className="ml-auto inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-icon-muted outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={(event) => {
@@ -3354,7 +3352,7 @@ export default function Sidebar() {
                         className="relative shrink-0 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                         onClick={openAddProjectCommandPalette}
                         type="button"
-                        aria-label="New project"
+                        aria-label="New workspace"
                       />
                     }
                   >
@@ -3364,7 +3362,7 @@ export default function Sidebar() {
                       aria-hidden="true"
                     />
                   </TooltipTrigger>
-                  <TooltipPopup side="right">New project</TooltipPopup>
+                  <TooltipPopup side="right">New workspace</TooltipPopup>
                 </Tooltip>
               </div>
             ) : null}
@@ -3383,7 +3381,7 @@ export default function Sidebar() {
                 <ul
                   id="sidebar-thread-search-results"
                   role="listbox"
-                  aria-label="Thread search results"
+                  aria-label="Task search results"
                   className="flex flex-col gap-px"
                 >
                   {threadSearchResults.map((thread, index) => {
@@ -3424,7 +3422,7 @@ export default function Sidebar() {
                 role="status"
                 className="px-2 py-6 text-center text-xs text-sidebar-muted-foreground"
               >
-                No threads found
+                No tasks found
               </p>
             )
           ) : null}

@@ -1462,6 +1462,78 @@ html[data-theme-id="t3-chat"] {
   --surface-grain-size: 128px 128px;
 }
 
+/* Janus keeps the inherited t3-chat id for stored preferences while giving
+   the draft canvas its own calm, outcome-first hierarchy. */
+.janus-task-hero {
+  padding-inline: 1rem;
+}
+
+.janus-task-starters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 1.5rem auto 0;
+  max-width: 42rem;
+  text-align: left;
+}
+
+.janus-task-starters button {
+  min-height: 2.75rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--card) 92%, var(--background));
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.janus-task-starters button:hover {
+  border-color: var(--ring);
+  background: var(--accent);
+}
+
+.janus-task-starters button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.janus-task-starters button:active {
+  transform: translateY(1px);
+}
+
+.janus-composer .composer-editor-surface {
+  min-height: 3.5rem;
+}
+
+.janus-conversation [data-chat-header] {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+@media (min-width: 640px) {
+  .janus-task-starters {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .janus-task-starters button {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .janus-task-starters button {
+    border-color: ButtonText;
+  }
+}
+
 body {
   background-image: var(--surface-grain);
   background-repeat: repeat;
