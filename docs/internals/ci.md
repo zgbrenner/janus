@@ -16,9 +16,10 @@ pushes to `main`:
   release breakage surfaces on PRs rather than at tag time.
 
 `.github/workflows/release.yml` builds macOS (`arm64` and `x64`), Linux (`x64`), and Windows (`x64`)
-desktop artifacts from a single `v*.*.*` tag and publishes one GitHub release. It auto-enables
-signing only when platform credentials are present. macOS passkey builds additionally require
-`APPLE_TEAM_ID` and the `MACOS_PROVISIONING_PROFILE` secret; Windows uses Azure Trusted Signing.
-Without the core signing credentials, it still releases unsigned artifacts.
+desktop artifacts from a single `v*.*.*` tag and publishes one GitHub release. Windows packaging
+fails closed unless `WINDOWS_CODE_SIGNING_PFX_BASE64` and `WINDOWS_CODE_SIGNING_PFX_PASSWORD` are
+available, signs through electron-builder's CSC/PFX path, and verifies the installer signer against
+the committed Janus public certificate before upload. macOS artifacts remain unsigned and
+unnotarized.
 
 See [Release Checklist](../operations/release.md) for the full release/signing setup checklist.

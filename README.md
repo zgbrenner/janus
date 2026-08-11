@@ -4,7 +4,7 @@ Janus is an approachable desktop workspace for knowledge work and software work.
 
 ## Prototype status
 
-Janus v0.0.1 is an unsigned, unnotarized prototype. Install only from this repository's [GitHub Releases](https://github.com/zgbrenner/janus/releases), verify the published checksum and attestation, and expect operating-system security prompts. Janus does not operate a hosted web service, package registry distribution, app-store channel, relay deployment, or signing service.
+Janus v0.0.2 is a prototype. Its Windows installer is Authenticode-signed with the Janus Project's self-signed code-signing certificate; the public certificate ships with the release. This proves which Janus key signed the installer, but Windows does not trust that certificate automatically, so expect SmartScreen or other operating-system prompts. macOS artifacts remain unsigned and unnotarized. Install only from this repository's [GitHub Releases](https://github.com/zgbrenner/janus/releases), then verify the published checksum, certificate fingerprint, and GitHub attestation. Janus does not operate a hosted web service, package registry distribution, app-store channel, or relay deployment.
 
 ## Provider setup
 
@@ -39,11 +39,11 @@ node scripts/release-smoke.ts
 
 ## GitHub-only releases
 
-Maintainers publish Janus by pushing an exact semantic tag such as `v0.0.1`. The tag is the sole release-version source. GitHub Actions builds macOS arm64/x64, Linux x64, and Windows x64 artifacts, creates `SHA256SUMS.txt`, records provenance attestations, and creates one GitHub Release. See the [release operations guide](docs/operations/release.md) for the full checklist.
+Maintainers publish Janus by pushing an exact semantic tag such as `v0.0.2`. The tag is the sole release-version source. GitHub Actions builds macOS arm64/x64, Linux x64, and Windows x64 artifacts, self-signs the Windows installer, verifies its signer against the committed public certificate, creates `SHA256SUMS.txt`, records provenance attestations, and creates one GitHub Release. See the [release operations guide](docs/operations/release.md) for the full checklist.
 
 ## Current limitations
 
-- Builds are unsigned and unnotarized; they are not production-ready installers.
+- Windows builds are self-signed rather than CA-trusted; macOS builds are unsigned and unnotarized. They are not production-ready installers.
 - Releases are desktop artifacts only. There is no Janus-hosted sync, relay, web deployment, or mobile-store distribution.
 - Windows WSL support requires a glibc-based x64 WSL distribution; the release pipeline bundles its Linux terminal module for that backend.
 

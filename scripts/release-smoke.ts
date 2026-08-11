@@ -1,5 +1,6 @@
 // @effect-diagnostics nodeBuiltinImport:off
 import * as NodeChildProcess from "node:child_process";
+import * as NodeCrypto from "node:crypto";
 import * as NodeFS from "node:fs";
 import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
@@ -216,7 +217,34 @@ function assertNoTrackedGitlinks(root: string): void {
   }
 }
 
+function assertJanusSigningCertificate(root: string): void {
+  const certificate = new NodeCrypto.X509Certificate(
+    NodeFS.readFileSync(NodePath.resolve(root, "certs/Janus-Code-Signing-Certificate.crt")),
+  );
+  assertEqual(
+    certificate.subject,
+    certificate.issuer,
+    "Janus signing certificate must be self-signed.",
+  );
+  assertEqual(
+    certificate.subject.includes("CN=Janus Project"),
+    true,
+    "Janus signing certificate must identify the Janus Project.",
+  );
+  assertEqual(
+    certificate.ca,
+    false,
+    "Janus signing certificate must not be a certificate authority.",
+  );
+  assertEqual(
+    certificate.keyUsage?.includes("1.3.6.1.5.5.7.3.3"),
+    true,
+    "Janus signing certificate must be restricted to code signing.",
+  );
+}
+
 assertNoTrackedGitlinks(repoRoot);
+assertJanusSigningCertificate(repoRoot);
 
 const tempRoot = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "t3-release-smoke-"));
 
@@ -525,6 +553,56 @@ try {
     true,
     "Platform packaging must consume the tag version and Windows WSL module.",
   );
+  const signedWindowsBuild = buildSteps.find(
+    (step) => step.name === "Build self-signed Windows artifact",
+  );
+  assertRecord(signedWindowsBuild, "Windows packaging must use the self-signed build path.");
+  assertEqual(
+    signedWindowsBuild.if,
+    "matrix.platform == 'win'",
+    "The self-signed build path must be Windows-only.",
+  );
+  assertRecord(signedWindowsBuild.env, "The self-signed Windows build must receive CI secrets.");
+  assertEqual(
+    signedWindowsBuild.env.CSC_LINK,
+    "${{ secrets.WINDOWS_CODE_SIGNING_PFX_BASE64 }}",
+    "Windows signing must load the private certificate from an Actions secret.",
+  );
+  assertEqual(
+    signedWindowsBuild.env.CSC_KEY_PASSWORD,
+    "${{ secrets.WINDOWS_CODE_SIGNING_PFX_PASSWORD }}",
+    "Windows signing must load the private certificate password from an Actions secret.",
+  );
+  assertEqual(
+    signedWindowsBuild.env.JANUS_WINDOWS_SIGNING_PROVIDER,
+    "csc",
+    "Windows signing must select electron-builder CSC certificate discovery.",
+  );
+  assertEqual(
+    typeof signedWindowsBuild.run === "string" && signedWindowsBuild.run.includes("--signed"),
+    true,
+    "Windows packaging must enable signing explicitly.",
+  );
+  const signatureVerification = buildSteps.find(
+    (step) => step.name === "Verify self-signed Windows artifact",
+  );
+  assertRecord(
+    signatureVerification,
+    "Windows packaging must verify the generated Authenticode signature.",
+  );
+  assertEqual(
+    signatureVerification.if,
+    "matrix.platform == 'win'",
+    "Authenticode verification must be Windows-only.",
+  );
+  assertEqual(
+    typeof signatureVerification.run === "string" &&
+      signatureVerification.run.includes("Get-AuthenticodeSignature") &&
+      signatureVerification.run.includes("SignerCertificate.Thumbprint") &&
+      signatureVerification.run.includes("Status -ne 'Valid'"),
+    true,
+    "Windows verification must prove signer identity and signature validity.",
+  );
   assertEqual(
     hasStep(
       buildSteps,
@@ -579,6 +657,9 @@ try {
     "Release must validate the final asset set before checksums.",
   );
   const releaseSteps = steps(release);
+  const certificateStagingIndex = releaseSteps.findIndex(
+    (step) => step.name === "Stage public signing certificate",
+  );
   const finalSetupIndex = releaseSteps.findIndex(
     (step) => step.uses === "voidzero-dev/setup-vp@v1",
   );
@@ -596,14 +677,16 @@ try {
   );
   assertEqual(
     0 <= finalSetupIndex &&
+      0 <= certificateStagingIndex &&
       finalSetupIndex < finalInstallIndex &&
       finalInstallIndex < mergeIndex &&
       mergeIndex < validationIndex &&
+      certificateStagingIndex < validationIndex &&
       validationIndex < checksumIndex &&
       checksumIndex < attestIndex &&
       attestIndex < publishIndex,
     true,
-    "Final release steps must be setup, install, merge, validate, checksum, attest, then publish.",
+    "Final release steps must stage the public certificate before validation and publication.",
   );
   assertEqual(
     hasStep(releaseSteps, (step) => step.uses === "actions/attest@v4"),

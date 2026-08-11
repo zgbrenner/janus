@@ -1069,6 +1069,11 @@ const AzureTrustedSigningOptionsConfig = Config.all({
   ),
 });
 
+const WindowsSigningProviderConfig = Config.literals(
+  ["azure", "csc"],
+  "JANUS_WINDOWS_SIGNING_PROVIDER",
+).pipe(Config.withDefault("azure"));
+
 const BuildEnvConfig = Config.all({
   platform: Config.schema(BuildPlatform, "T3CODE_DESKTOP_PLATFORM").pipe(Config.option),
   target: Config.string("T3CODE_DESKTOP_TARGET").pipe(Config.option),
@@ -1658,7 +1663,15 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       signAndEditExecutable: true,
     };
     if (signed) {
-      winConfig.azureSignOptions = yield* AzureTrustedSigningOptionsConfig;
+      const signingProvider = yield* WindowsSigningProviderConfig;
+      if (signingProvider === "azure") {
+        winConfig.azureSignOptions = yield* AzureTrustedSigningOptionsConfig;
+      } else {
+        winConfig.signtoolOptions = {
+          signingHashAlgorithms: ["sha256"],
+          rfc3161TimeStampServer: "http://timestamp.digicert.com",
+        };
+      }
     }
     buildConfig.win = winConfig;
   }
@@ -2173,7 +2186,7 @@ const buildDesktopArtifactCli = Command.make("build-desktop-artifact", {
   ),
   signed: Flag.boolean("signed").pipe(
     Flag.withDescription(
-      "Enable signing/notarization discovery; Windows uses Azure Trusted Signing (env: T3CODE_DESKTOP_SIGNED).",
+      "Enable signing/notarization discovery; Windows supports Azure or CSC/PFX signing (env: T3CODE_DESKTOP_SIGNED).",
     ),
     Flag.optional,
   ),

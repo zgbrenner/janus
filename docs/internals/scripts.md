@@ -89,11 +89,14 @@ authenticated.
 - Signed macOS builds also require `T3CODE_APPLE_TEAM_ID` and
   `T3CODE_MACOS_PROVISIONING_PROFILE`. The passkey RP domain is derived from
   `T3CODE_CLERK_PUBLISHABLE_KEY` unless `T3CODE_CLERK_PASSKEY_RP_DOMAINS` overrides it.
-- Windows `--signed` uses Azure Trusted Signing and expects:
+- Windows `--signed` defaults to Azure Trusted Signing and expects:
   `AZURE_TRUSTED_SIGNING_ENDPOINT`, `AZURE_TRUSTED_SIGNING_ACCOUNT_NAME`,
   `AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE_NAME`, and `AZURE_TRUSTED_SIGNING_PUBLISHER_NAME`.
 - Azure authentication env vars are also required (for example service principal with secret):
   `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`.
+- To use a local or CI PFX instead, set `JANUS_WINDOWS_SIGNING_PROVIDER=csc`, `CSC_LINK` to the
+  PFX path or base64 payload, and `CSC_KEY_PASSWORD` to its password. The public certificate alone
+  cannot sign builds and must never be substituted for the encrypted private PFX.
 
 ## Browser development
 

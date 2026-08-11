@@ -23,6 +23,8 @@ const artifactNames = [
   `Janus-${version}-x64.zip.blockmap`,
 ] as const;
 
+const signingCertificateName = "Janus-Code-Signing-Certificate.crt";
+
 function sha512(content: string): string {
   return NodeCrypto.createHash("sha512").update(content).digest("base64");
 }
@@ -39,6 +41,10 @@ function writeFixture(): string {
     contents.set(name, content);
     NodeFS.writeFileSync(NodePath.join(assetsDir, name), content);
   }
+  NodeFS.writeFileSync(
+    NodePath.join(assetsDir, signingCertificateName),
+    "Janus self-signed public code-signing certificate fixture",
+  );
 
   const manifest = (names: ReadonlyArray<string>) =>
     `version: ${version}\nfiles:\n${names

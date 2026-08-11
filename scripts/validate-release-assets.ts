@@ -17,6 +17,7 @@ export interface ReleaseAssetValidationResult {
 }
 
 const manifestNames = ["latest-mac.yml", "latest-linux.yml", "latest.yml"] as const;
+const signingCertificateName = "Janus-Code-Signing-Certificate.crt";
 
 function expectedArtifactNames(version: string): ReadonlyArray<string> {
   return [
@@ -88,7 +89,7 @@ export function validateReleaseAssets(
   input: ReleaseAssetValidationInput,
 ): ReleaseAssetValidationResult {
   const artifacts = expectedArtifactNames(input.version);
-  const expectedFiles = new Set([...artifacts, ...manifestNames]);
+  const expectedFiles = new Set([...artifacts, ...manifestNames, signingCertificateName]);
   const actualEntries = NodeFS.readdirSync(input.assetsDir, {
     withFileTypes: true,
   });
