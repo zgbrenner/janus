@@ -156,6 +156,39 @@ function hasStep(
   return steps.some(predicate);
 }
 
+function workflowActions(
+  workflow: Record<string, unknown>,
+): ReadonlyArray<{ readonly jobId: string; readonly uses: string }> {
+  assertRecord(workflow.jobs, "Workflow must contain jobs.");
+  return Object.entries(workflow.jobs).flatMap(([jobId, definition]) => {
+    assertRecord(definition, `Workflow job '${jobId}' must be an object.`);
+    return steps(definition).flatMap((step) =>
+      typeof step.uses === "string" ? [{ jobId, uses: step.uses }] : [],
+    );
+  });
+}
+
+function assertActionOccurrences(
+  actions: ReadonlyArray<{ readonly jobId: string; readonly uses: string }>,
+  action: string,
+  expectedCount: number,
+): void {
+  const actionName = action.slice(0, action.lastIndexOf("@"));
+  const occurrences = actions.filter((entry) => entry.uses.startsWith(`${actionName}@`));
+  assertEqual(
+    occurrences.length,
+    expectedCount,
+    `Expected ${expectedCount} ${actionName} action occurrence(s).`,
+  );
+  for (const occurrence of occurrences) {
+    assertEqual(
+      occurrence.uses,
+      action,
+      `${occurrence.jobId} must use the required ${action} major.`,
+    );
+  }
+}
+
 function assertPackageVersion(path: string, version: string): void {
   const packageJson = JSON.parse(NodeFS.readFileSync(path, "utf8")) as {
     readonly version?: unknown;
@@ -217,23 +250,42 @@ try {
   );
   assertRecord(securityWorkflow.on, "Security workflow must define triggers.");
   assertEqual(
-    Object.hasOwn(securityWorkflow.on, "pull_request"),
-    true,
-    "Security workflow must scan pull requests.",
+    JSON.stringify(Object.keys(securityWorkflow.on).toSorted()),
+    JSON.stringify(["pull_request", "push", "schedule", "workflow_dispatch"]),
+    "Security workflow must have only PR, main, weekly, and manual triggers.",
+  );
+  assertEqual(
+    securityWorkflow.on.pull_request,
+    null,
+    "Security workflow pull-request trigger must have no broadened shape.",
   );
   assertRecord(securityWorkflow.on.push, "Security workflow must scan main pushes.");
   assertEqual(
-    JSON.stringify(securityWorkflow.on.push.branches),
-    JSON.stringify(["main"]),
-    "Security workflow must scan main pushes.",
+    JSON.stringify(securityWorkflow.on.push),
+    JSON.stringify({ branches: ["main"] }),
+    "Security workflow push trigger must target main only.",
   );
-  assertArray(securityWorkflow.on.schedule, "Security workflow must scan weekly.");
   assertEqual(
-    Object.hasOwn(securityWorkflow.on, "workflow_dispatch"),
-    true,
-    "Security workflow must support manual dispatch.",
+    JSON.stringify(securityWorkflow.on.schedule),
+    JSON.stringify([{ cron: "23 4 * * 1" }]),
+    "Security workflow must scan on the exact weekly cron.",
+  );
+  assertEqual(
+    securityWorkflow.on.workflow_dispatch,
+    null,
+    "Security workflow manual trigger must have no broadened shape.",
+  );
+  assertEqual(
+    JSON.stringify(Object.keys(securityWorkflow.jobs ?? {}).toSorted()),
+    JSON.stringify(["codeql", "dependency_review"]),
+    "Security workflow must contain only its two security jobs.",
   );
   const codeqlJob = job(securityWorkflow, "codeql");
+  assertEqual(
+    Object.hasOwn(codeqlJob, "if"),
+    false,
+    "CodeQL must run for PR, main, schedule, and manual security triggers.",
+  );
   assertRecord(codeqlJob.strategy, "CodeQL must use a language matrix.");
   assertRecord(codeqlJob.strategy.matrix, "CodeQL must use a language matrix.");
   assertArray(codeqlJob.strategy.matrix.language, "CodeQL must declare languages.");
@@ -243,42 +295,53 @@ try {
     "CodeQL must analyze JavaScript/TypeScript and GitHub Actions.",
   );
   assertRecord(codeqlJob.permissions, "CodeQL must declare least-privilege permissions.");
-  assertEqual(codeqlJob.permissions.contents, "read", "CodeQL must read repository contents only.");
   assertEqual(
-    codeqlJob.permissions["security-events"],
-    "write",
-    "CodeQL must upload security results.",
+    JSON.stringify(codeqlJob.permissions),
+    JSON.stringify({ contents: "read", "security-events": "write" }),
+    "CodeQL must have only read contents and security-events write permissions.",
   );
   assertRecord(securityWorkflow.permissions, "Security workflow must declare permissions.");
   assertEqual(
-    JSON.stringify(Object.keys(securityWorkflow.permissions).toSorted()),
-    JSON.stringify(["contents"]),
+    JSON.stringify(securityWorkflow.permissions),
+    JSON.stringify({ contents: "read" }),
     "Security workflow must default to read-only contents.",
   );
-  for (const action of ["github/codeql-action/init@v4", "github/codeql-action/analyze@v4"]) {
-    assertEqual(
-      hasStep(steps(codeqlJob), (step) => step.uses === action),
-      true,
-      `CodeQL must use ${action}.`,
-    );
-  }
   const dependencyReviewJob = job(securityWorkflow, "dependency_review");
+  assertEqual(
+    dependencyReviewJob.if,
+    "github.event_name == 'pull_request'",
+    "Dependency review must run only on pull requests.",
+  );
   assertRecord(
     dependencyReviewJob.permissions,
     "Dependency review must declare least-privilege permissions.",
   );
   assertEqual(
-    JSON.stringify(Object.keys(dependencyReviewJob.permissions).toSorted()),
-    JSON.stringify(["contents"]),
+    JSON.stringify(dependencyReviewJob.permissions),
+    JSON.stringify({ contents: "read" }),
     "Dependency review must only read contents.",
   );
+
+  const ciActions = workflowActions(ciWorkflow);
+  const securityActions = workflowActions(securityWorkflow);
+  const releaseActions = workflowActions(
+    workflowDocument(NodePath.resolve(repoRoot, ".github/workflows/release.yml")),
+  );
+  const allActions = [...ciActions, ...securityActions, ...releaseActions];
+  assertActionOccurrences(allActions, "actions/checkout@v6", 11);
+  assertActionOccurrences(allActions, "voidzero-dev/setup-vp@v1", 8);
+  assertActionOccurrences(allActions, "actions/upload-artifact@v7", 2);
+  assertActionOccurrences(allActions, "actions/download-artifact@v8", 2);
+  assertActionOccurrences(allActions, "github/codeql-action/init@v4", 1);
+  assertActionOccurrences(allActions, "github/codeql-action/analyze@v4", 1);
+  assertActionOccurrences(allActions, "actions/dependency-review-action@v4", 1);
+  assertActionOccurrences(allActions, "actions/attest@v4", 1);
+  assertActionOccurrences(allActions, "softprops/action-gh-release@v3", 1);
+
   assertEqual(
-    hasStep(
-      steps(dependencyReviewJob),
-      (step) => step.uses === "actions/dependency-review-action@v4",
-    ),
-    true,
-    "Pull requests must run dependency-review v4.",
+    JSON.stringify(securityWorkflow.on.push.branches),
+    JSON.stringify(["main"]),
+    "Security workflow must scan main pushes.",
   );
 
   const releasePath = NodePath.resolve(repoRoot, ".github/workflows/release.yml");
@@ -476,19 +539,15 @@ try {
     (step) => step.uses === "softprops/action-gh-release@v3",
   );
   assertEqual(
-    0 <= finalSetupIndex && finalSetupIndex < finalInstallIndex && finalInstallIndex < mergeIndex,
+    0 <= finalSetupIndex &&
+      finalSetupIndex < finalInstallIndex &&
+      finalInstallIndex < mergeIndex &&
+      mergeIndex < validationIndex &&
+      validationIndex < checksumIndex &&
+      checksumIndex < attestIndex &&
+      attestIndex < publishIndex,
     true,
-    "Final release must set up Vite+ and install locked dependencies before repo scripts.",
-  );
-  assertEqual(
-    validationIndex < checksumIndex,
-    true,
-    "Release must validate assets before computing SHA256SUMS.txt.",
-  );
-  assertEqual(
-    checksumIndex < attestIndex && attestIndex < publishIndex && validationIndex < attestIndex,
-    true,
-    "Release validation must complete before checksums, attestations, and publication.",
+    "Final release steps must be setup, install, merge, validate, checksum, attest, then publish.",
   );
   assertEqual(
     hasStep(releaseSteps, (step) => step.uses === "actions/attest@v4"),
