@@ -602,18 +602,21 @@ try {
   );
   assertEqual(
     typeof signatureVerification.run === "string" &&
-      signatureVerification.run.includes("Get-AuthenticodeSignature") &&
-      signatureVerification.run.includes("SignerCertificate.Thumbprint") &&
-      signatureVerification.run.includes("Status -ne 'Valid'"),
+      signatureVerification.run.includes("signtool.exe") &&
+      signatureVerification.run.includes("verify /pa /all /v") &&
+      signatureVerification.run.includes("SHA1 hash: $expectedThumbprint") &&
+      signatureVerification.run.includes("The signature is timestamped") &&
+      signatureVerification.run.includes("root certificate which is not trusted") &&
+      signatureVerification.run.includes("$verificationExitCode -ne 1"),
     true,
-    "Windows verification must prove signer identity and signature validity.",
+    "Windows verification must prove signer identity, timestamping, and the expected self-signed trust result.",
   );
   assertEqual(
     typeof signatureVerification.run === "string" &&
-      signatureVerification.run.indexOf("Import-Certificate") <
-        signatureVerification.run.indexOf("Get-AuthenticodeSignature"),
+      !signatureVerification.run.includes("Import-Certificate") &&
+      !signatureVerification.run.includes("Get-AuthenticodeSignature"),
     true,
-    "Windows verification must trust the exact Janus certificate before resolving the signature chain.",
+    "Windows verification must not mutate the runner trust store or use the hanging PowerShell verifier.",
   );
   assertEqual(
     hasStep(

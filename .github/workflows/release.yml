@@ -182,29 +182,36 @@ jobs:
           $installerPath = "release-publish/Janus-${{ needs.preflight.outputs.version }}-x64.exe"
           $certificatePath = 'certs/Janus-Code-Signing-Certificate.crt'
           $expectedCertificate = Get-PfxCertificate -FilePath $certificatePath
-          $trustedPath = "Cert:\CurrentUser\Root\$($expectedCertificate.Thumbprint)"
-          $alreadyTrusted = Test-Path -LiteralPath $trustedPath
-          if (-not $alreadyTrusted) {
-            Import-Certificate -FilePath $certificatePath -CertStoreLocation Cert:\CurrentUser\Root | Out-Null
+          $expectedThumbprint = $expectedCertificate.Thumbprint.ToUpperInvariant()
+          $signToolPath = Get-ChildItem -Path "$env:LOCALAPPDATA\electron-builder\Cache" -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -match 'windows-10[\\/]x64[\\/]signtool\.exe$' } |
+            Select-Object -First 1 -ExpandProperty FullName
+          if (-not $signToolPath) {
+            throw 'Could not locate the SignTool bundled with electron-builder.'
           }
-          try {
-            $signature = Get-AuthenticodeSignature -LiteralPath $installerPath
-            if ($null -eq $signature.SignerCertificate) {
-              throw 'The Windows installer has no Authenticode signer.'
-            }
-            if ($signature.SignerCertificate.Thumbprint -ne $expectedCertificate.Thumbprint) {
-              throw 'The Windows installer signer does not match the published Janus certificate.'
-            }
-            if ($null -eq $signature.TimeStamperCertificate) {
-              throw 'The Windows installer signature is not timestamped.'
-            }
-            if ($signature.Status -ne 'Valid') {
-              throw "Authenticode verification failed: $($signature.StatusMessage)"
-            }
-          } finally {
-            if (-not $alreadyTrusted) {
-              Remove-Item -LiteralPath $trustedPath
-            }
+          $PSNativeCommandUseErrorActionPreference = $false
+          $ErrorActionPreference = 'Continue'
+          $verificationLines = & $signToolPath verify /pa /all /v $installerPath 2>&1
+          $verificationExitCode = $LASTEXITCODE
+          $ErrorActionPreference = 'Stop'
+          $verificationOutput = ($verificationLines | Out-String)
+          $normalizedOutput = (($verificationLines | ForEach-Object { $_.ToString() }) -join ' ')
+          $normalizedOutput = ($normalizedOutput -replace '\s+', ' ').Trim()
+          $verificationOutput
+          if ($verificationExitCode -ne 1) {
+            throw "Expected SignTool's untrusted-root result for a self-signed certificate; received exit code $verificationExitCode."
+          }
+          if ($normalizedOutput -notmatch [regex]::Escape("SHA1 hash: $expectedThumbprint")) {
+            throw 'The Windows installer signer does not match the published Janus certificate.'
+          }
+          if ($normalizedOutput -notmatch 'The signature is timestamped') {
+            throw 'The Windows installer signature is not timestamped.'
+          }
+          if ($normalizedOutput -notmatch 'Number of errors: 1') {
+            throw 'SignTool reported an unexpected number of signature errors.'
+          }
+          if ($normalizedOutput -notmatch 'root certificate which is not trusted') {
+            throw 'SignTool did not report the expected self-signed trust-chain result.'
           }
       - name: Stage macOS updater manifest
         if: matrix.platform == 'mac'
