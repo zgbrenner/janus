@@ -32,7 +32,9 @@ function manifestEntry(name: string, content: string): string {
 }
 
 function writeFixture(): string {
-  const assetsDir = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "janus-release-assets-"));
+  const assetsDir = NodeFS.mkdtempSync(
+    NodePath.join(NodeOS.tmpdir(), "janus-release-assets-"),
+  );
   const contents = new Map<string, string>();
   for (const [index, name] of artifactNames.entries()) {
     const content = `Janus release fixture ${index}`;
@@ -46,10 +48,21 @@ function writeFixture(): string {
       .join("")}releaseDate: '2026-08-11T00:00:00.000Z'\n`;
   NodeFS.writeFileSync(
     NodePath.join(assetsDir, "latest-mac.yml"),
-    manifest([artifactNames[0], artifactNames[1], artifactNames[2], artifactNames[3]]),
+    manifest([
+      artifactNames[0],
+      artifactNames[1],
+      artifactNames[2],
+      artifactNames[3],
+    ]),
   );
-  NodeFS.writeFileSync(NodePath.join(assetsDir, "latest-linux.yml"), manifest([artifactNames[4]]));
-  NodeFS.writeFileSync(NodePath.join(assetsDir, "latest.yml"), manifest([artifactNames[5]]));
+  NodeFS.writeFileSync(
+    NodePath.join(assetsDir, "latest-linux.yml"),
+    manifest([artifactNames[4]]),
+  );
+  NodeFS.writeFileSync(
+    NodePath.join(assetsDir, "latest.yml"),
+    manifest([artifactNames[5]]),
+  );
   return assetsDir;
 }
 
@@ -69,8 +82,14 @@ describe("validate-release-assets", () => {
   it("rejects an unexpected build byproduct", () => {
     const assetsDir = writeFixture();
     try {
-      NodeFS.writeFileSync(NodePath.join(assetsDir, "builder-debug.yml"), "debug");
-      assert.throws(() => validateReleaseAssets({ assetsDir, version }), /Unexpected release file/);
+      NodeFS.writeFileSync(
+        NodePath.join(assetsDir, "builder-debug.yml"),
+        "debug",
+      );
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir, version }),
+        /Unexpected release file/,
+      );
     } finally {
       NodeFS.rmSync(assetsDir, { recursive: true, force: true });
     }
@@ -80,8 +99,14 @@ describe("validate-release-assets", () => {
     const assetsDir = writeFixture();
     try {
       const installerPath = NodePath.join(assetsDir, artifactNames[5]);
-      NodeFS.writeFileSync(installerPath, "x".repeat(NodeFS.statSync(installerPath).size));
-      assert.throws(() => validateReleaseAssets({ assetsDir, version }), /SHA-512 mismatch/);
+      NodeFS.writeFileSync(
+        installerPath,
+        "x".repeat(NodeFS.statSync(installerPath).size),
+      );
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir, version }),
+        /SHA-512 mismatch/,
+      );
     } finally {
       NodeFS.rmSync(assetsDir, { recursive: true, force: true });
     }
@@ -93,9 +118,15 @@ describe("validate-release-assets", () => {
       const manifestPath = NodePath.join(assetsDir, "latest-linux.yml");
       NodeFS.writeFileSync(
         manifestPath,
-        NodeFS.readFileSync(manifestPath, "utf8").replace(`version: ${version}`, "version: 9.9.9"),
+        NodeFS.readFileSync(manifestPath, "utf8").replace(
+          `version: ${version}`,
+          "version: 9.9.9",
+        ),
       );
-      assert.throws(() => validateReleaseAssets({ assetsDir, version }), /version mismatch/);
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir, version }),
+        /version mismatch/,
+      );
     } finally {
       NodeFS.rmSync(assetsDir, { recursive: true, force: true });
     }
@@ -121,8 +152,14 @@ describe("validate-release-assets", () => {
   it("rejects updater metadata with a stale size", () => {
     const assetsDir = writeFixture();
     try {
-      NodeFS.appendFileSync(NodePath.join(assetsDir, artifactNames[4]), "larger");
-      assert.throws(() => validateReleaseAssets({ assetsDir, version }), /size mismatch/);
+      NodeFS.appendFileSync(
+        NodePath.join(assetsDir, artifactNames[4]),
+        "larger",
+      );
+      assert.throws(
+        () => validateReleaseAssets({ assetsDir, version }),
+        /size mismatch/,
+      );
     } finally {
       NodeFS.rmSync(assetsDir, { recursive: true, force: true });
     }

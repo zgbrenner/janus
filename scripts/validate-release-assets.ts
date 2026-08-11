@@ -16,7 +16,11 @@ export interface ReleaseAssetValidationResult {
   readonly manifests: ReadonlyArray<string>;
 }
 
-const manifestNames = ["latest-mac.yml", "latest-linux.yml", "latest.yml"] as const;
+const manifestNames = [
+  "latest-mac.yml",
+  "latest-linux.yml",
+  "latest.yml",
+] as const;
 
 function expectedArtifactNames(version: string): ReadonlyArray<string> {
   return [
@@ -35,7 +39,9 @@ function expectedArtifactNames(version: string): ReadonlyArray<string> {
 }
 
 function sha512(path: string): string {
-  return NodeCrypto.createHash("sha512").update(NodeFS.readFileSync(path)).digest("base64");
+  return NodeCrypto.createHash("sha512")
+    .update(NodeFS.readFileSync(path))
+    .digest("base64");
 }
 
 function validateManifest(
@@ -64,7 +70,9 @@ function validateManifest(
     JSON.stringify([...filesByUrl.keys()].toSorted()) !==
     JSON.stringify([...expectedUrls].toSorted())
   ) {
-    throw new Error(`${manifestName} does not describe exactly its expected Janus artifacts.`);
+    throw new Error(
+      `${manifestName} does not describe exactly its expected Janus artifacts.`,
+    );
   }
 
   for (const url of expectedUrls) {
@@ -93,8 +101,10 @@ export function validateReleaseAssets(
     withFileTypes: true,
   });
   for (const entry of actualEntries) {
-    if (!entry.isFile()) throw new Error(`Unexpected release entry: ${entry.name}.`);
-    if (!expectedFiles.has(entry.name)) throw new Error(`Unexpected release file: ${entry.name}.`);
+    if (!entry.isFile())
+      throw new Error(`Unexpected release entry: ${entry.name}.`);
+    if (!expectedFiles.has(entry.name))
+      throw new Error(`Unexpected release file: ${entry.name}.`);
   }
   for (const file of expectedFiles) {
     const path = NodePath.join(input.assetsDir, file);
@@ -103,9 +113,18 @@ export function validateReleaseAssets(
     }
   }
 
-  validateManifest(input.assetsDir, "latest-mac.yml", input.version, artifacts.slice(0, 4));
-  validateManifest(input.assetsDir, "latest-linux.yml", input.version, [artifacts[4]!]);
-  validateManifest(input.assetsDir, "latest.yml", input.version, [artifacts[5]!]);
+  validateManifest(
+    input.assetsDir,
+    "latest-mac.yml",
+    input.version,
+    artifacts.slice(0, 4),
+  );
+  validateManifest(input.assetsDir, "latest-linux.yml", input.version, [
+    artifacts[4]!,
+  ]);
+  validateManifest(input.assetsDir, "latest.yml", input.version, [
+    artifacts[5]!,
+  ]);
 
   return { artifacts, manifests: [...manifestNames] };
 }
@@ -113,7 +132,8 @@ export function validateReleaseAssets(
 function readOption(name: string): string {
   const index = process.argv.indexOf(name);
   const value = index === -1 ? undefined : process.argv[index + 1];
-  if (!value || value.startsWith("--")) throw new Error(`Missing required ${name} option.`);
+  if (!value || value.startsWith("--"))
+    throw new Error(`Missing required ${name} option.`);
   return value;
 }
 
