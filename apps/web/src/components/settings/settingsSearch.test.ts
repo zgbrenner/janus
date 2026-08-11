@@ -67,7 +67,12 @@ describe("searchSettings", () => {
 
   it("serves anchor props to panels from the catalog", () => {
     expect(searchableSetting("word-wrap")).toEqual({ id: "word-wrap", title: "Word wrap" });
-    expect(searchableSetting("archive")).toEqual({ id: "archive", title: "Archived threads" });
+    expect(searchableSetting("auto-settle-inactive-threads")).toEqual({
+      id: "auto-settle-inactive-threads",
+      title: "Auto-settle inactive tasks",
+    });
+    expect(searchableSetting("new-threads")).toEqual({ id: "new-threads", title: "New tasks" });
+    expect(searchableSetting("archive")).toEqual({ id: "archive", title: "Archived tasks" });
   });
 
   it("routes appearance settings to their current section", () => {

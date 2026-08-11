@@ -482,7 +482,7 @@ export function useSettingsRestore(onRestored?: () => void) {
         ? ["Time format"]
         : []),
       ...(settings.sidebarThreadPreviewCount !== DEFAULT_UNIFIED_SETTINGS.sidebarThreadPreviewCount
-        ? ["Visible threads"]
+        ? ["Visible tasks"]
         : []),
       ...(settings.sidebarProjectGroupingMode !==
       DEFAULT_UNIFIED_SETTINGS.sidebarProjectGroupingMode
@@ -490,7 +490,7 @@ export function useSettingsRestore(onRestored?: () => void) {
         : []),
       ...(settings.sidebarAutoSettleAfterDays !==
       DEFAULT_UNIFIED_SETTINGS.sidebarAutoSettleAfterDays
-        ? ["Auto-settle inactive threads"]
+        ? ["Auto-settle inactive tasks"]
         : []),
       ...(settings.wordWrap !== DEFAULT_UNIFIED_SETTINGS.wordWrap ? ["Word wrap"] : []),
       ...(settings.fontFamilySans !== DEFAULT_UNIFIED_SETTINGS.fontFamilySans
@@ -516,7 +516,7 @@ export function useSettingsRestore(onRestored?: () => void) {
         : []),
       ...(isBackgroundActivityDirty ? ["Background activity"] : []),
       ...(settings.defaultThreadEnvMode !== DEFAULT_UNIFIED_SETTINGS.defaultThreadEnvMode
-        ? ["New thread mode"]
+        ? ["New task mode"]
         : []),
       ...(settings.newWorktreesStartFromOrigin !==
       DEFAULT_UNIFIED_SETTINGS.newWorktreesStartFromOrigin
@@ -1633,7 +1633,7 @@ function LegacyFeaturesSection() {
           <div className="relative space-y-1 overflow-visible pt-3 text-foreground">
             <SettingsRow
               {...searchableSetting("legacy-plan-mode")}
-              description="Brings back the Build/Plan toggle in the composer along with the /plan and /default commands and the Shift+Tab shortcut. While off, every thread runs in build mode."
+              description="Brings back the Build/Plan toggle in the composer along with the /plan and /default commands and the Shift+Tab shortcut. While off, every task runs in build mode."
               control={
                 <Switch
                   checked={settings.planModeEnabled}
@@ -1672,7 +1672,7 @@ function LegacyFeaturesSection() {
             />
             <SettingsRow
               {...searchableSetting("legacy-sidebar")}
-              description="Brings back the original sidebar with per-project thread trees. The default sidebar shows one flat list: active work as rich cards, settled threads as compact rows."
+              description="Brings back the original sidebar with per-project task trees. The default sidebar shows one flat list: active work as rich cards, settled tasks as compact rows."
               control={
                 <Switch
                   checked={settings.legacySidebarEnabled}
@@ -1784,7 +1784,7 @@ export function GeneralSettingsPanel() {
 
         <SettingsRow
           {...searchableSetting("auto-settle-inactive-threads")}
-          description="Sidebar threads with no activity for this long settle automatically. Threads on merged or closed PRs always settle."
+          description="Sidebar tasks with no activity for this long settle automatically. Tasks on merged or closed PRs always settle."
           resetAction={
             settings.sidebarAutoSettleAfterDays !==
             DEFAULT_UNIFIED_SETTINGS.sidebarAutoSettleAfterDays ? (
@@ -1806,14 +1806,14 @@ export function GeneralSettingsPanel() {
                   sidebarAutoSettleAfterDays: checked ? AUTO_SETTLE_DEFAULT_DAYS : null,
                 })
               }
-              aria-label="Auto-settle inactive threads"
+              aria-label="Auto-settle inactive tasks"
             />
           }
         />
         {settings.sidebarAutoSettleAfterDays !== null ? (
           <SettingsRow
             title="Days of inactivity before auto-settle"
-            description="Any new activity un-settles a thread automatically."
+            description="Any new activity un-settles a task automatically."
             control={
               <AutoSettleDaysInput
                 value={settings.sidebarAutoSettleAfterDays}
@@ -2002,13 +2002,13 @@ export function GeneralSettingsPanel() {
 
         <SettingsRow
           {...searchableSetting("new-threads")}
-          description="Pick the default workspace mode for newly created draft threads."
+          description="Pick the default workspace mode for newly created draft tasks."
           resetAction={
             settings.defaultThreadEnvMode !== DEFAULT_UNIFIED_SETTINGS.defaultThreadEnvMode ||
             settings.newWorktreesStartFromOrigin !==
               DEFAULT_UNIFIED_SETTINGS.newWorktreesStartFromOrigin ? (
               <SettingResetButton
-                label="new threads"
+                label="new tasks"
                 onClick={() =>
                   updateSettings({
                     defaultThreadEnvMode: DEFAULT_UNIFIED_SETTINGS.defaultThreadEnvMode,
@@ -2028,7 +2028,7 @@ export function GeneralSettingsPanel() {
                 }
               }}
             >
-              <SelectTrigger className="w-full sm:w-44" aria-label="Default thread mode">
+              <SelectTrigger className="w-full sm:w-44" aria-label="Default task mode">
                 <SelectValue>
                   {settings.defaultThreadEnvMode === "worktree" ? "New worktree" : "Local"}
                 </SelectValue>
@@ -2106,7 +2106,7 @@ export function GeneralSettingsPanel() {
 
         <SettingsRow
           {...searchableSetting("archive-confirmation")}
-          description="Require a second click on the inline archive action before a thread is archived."
+          description="Require a second click on the inline archive action before a task is archived."
           resetAction={
             settings.confirmThreadArchive !== DEFAULT_UNIFIED_SETTINGS.confirmThreadArchive ? (
               <SettingResetButton
@@ -2125,14 +2125,14 @@ export function GeneralSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ confirmThreadArchive: Boolean(checked) })
               }
-              aria-label="Confirm thread archiving"
+              aria-label="Confirm task archiving"
             />
           }
         />
 
         <SettingsRow
           {...searchableSetting("delete-confirmation")}
-          description="Ask before deleting a thread and its chat history."
+          description="Ask before deleting a task and its chat history."
           resetAction={
             settings.confirmThreadDelete !== DEFAULT_UNIFIED_SETTINGS.confirmThreadDelete ? (
               <SettingResetButton
@@ -2151,14 +2151,14 @@ export function GeneralSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ confirmThreadDelete: Boolean(checked) })
               }
-              aria-label="Confirm thread deletion"
+              aria-label="Confirm task deletion"
             />
           }
         />
 
         <SettingsRow
           {...searchableSetting("text-generation-model")}
-          description="Default model for generated text like thread titles and source control content. Source control settings can override it with a dedicated source control writer model."
+          description="Default model for generated text like task titles and source control content. Source control settings can override it with a dedicated source control writer model."
           resetAction={
             isTextGenerationModelDirty ? (
               <SettingResetButton
@@ -2342,7 +2342,7 @@ export function ArchivedThreadsPanel() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to unarchive thread",
+              title: "Failed to unarchive task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2359,7 +2359,7 @@ export function ArchivedThreadsPanel() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to delete thread",
+              title: "Failed to delete task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2385,16 +2385,16 @@ export function ArchivedThreadsPanel() {
                   <ArchiveIcon className="size-3.5 text-muted-foreground" />
                 )}
                 {isLoadingArchive
-                  ? "Loading archived threads"
+                  ? "Loading archived tasks"
                   : archiveError
-                    ? "Could not load archived threads"
-                    : "No archived threads"}
+                    ? "Could not load archived tasks"
+                    : "No archived tasks"}
               </span>
             }
             description={
               isLoadingArchive
                 ? "Checking connected environments."
-                : (archiveError ?? "Archived threads will appear here.")
+                : (archiveError ?? "Archived tasks will appear here.")
             }
           />
         </SettingsSection>
@@ -2432,7 +2432,7 @@ export function ArchivedThreadsPanel() {
                       toastManager.add(
                         stackedThreadToast({
                           type: "error",
-                          title: "Archived thread action failed",
+                          title: "Archived task action failed",
                           description:
                             error instanceof Error ? error.message : "An error occurred.",
                         }),
@@ -2468,7 +2468,7 @@ export function ArchivedThreadsPanel() {
                           toastManager.add(
                             stackedThreadToast({
                               type: "error",
-                              title: "Failed to unarchive thread",
+                              title: "Failed to unarchive task",
                               description:
                                 error instanceof Error ? error.message : "An error occurred.",
                             }),

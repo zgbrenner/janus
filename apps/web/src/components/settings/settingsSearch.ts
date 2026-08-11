@@ -100,7 +100,7 @@ export const SETTINGS_SEARCH_ITEMS = [
   },
   {
     id: "auto-settle-inactive-threads",
-    title: "Auto-settle inactive threads",
+    title: "Auto-settle inactive tasks",
     to: "/settings/general",
   },
   {
@@ -120,7 +120,7 @@ export const SETTINGS_SEARCH_ITEMS = [
   },
   {
     id: "new-threads",
-    title: "New threads",
+    title: "New tasks",
     to: "/settings/general",
   },
   {
@@ -191,7 +191,7 @@ export const SETTINGS_SEARCH_ITEMS = [
   },
   {
     id: "archive",
-    title: "Archived threads",
+    title: "Archived tasks",
     to: "/settings/archived",
   },
 ] as const satisfies ReadonlyArray<SettingsSearchItem>;
