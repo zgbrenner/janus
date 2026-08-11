@@ -175,32 +175,31 @@ jobs:
             --signed
       - name: Verify self-signed Windows artifact
         if: matrix.platform == 'win'
+        timeout-minutes: 2
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $installerPath = "release-publish/Janus-${{ needs.preflight.outputs.version }}-x64.exe"
           $certificatePath = 'certs/Janus-Code-Signing-Certificate.crt'
           $expectedCertificate = Get-PfxCertificate -FilePath $certificatePath
-          $signature = Get-AuthenticodeSignature -LiteralPath $installerPath
-          if ($null -eq $signature.SignerCertificate) {
-            throw 'The Windows installer has no Authenticode signer.'
-          }
-          if ($signature.SignerCertificate.Thumbprint -ne $expectedCertificate.Thumbprint) {
-            throw 'The Windows installer signer does not match the published Janus certificate.'
-          }
-          if ($null -eq $signature.TimeStamperCertificate) {
-            throw 'The Windows installer signature is not timestamped.'
-          }
-
           $trustedPath = "Cert:\CurrentUser\Root\$($expectedCertificate.Thumbprint)"
           $alreadyTrusted = Test-Path -LiteralPath $trustedPath
           if (-not $alreadyTrusted) {
             Import-Certificate -FilePath $certificatePath -CertStoreLocation Cert:\CurrentUser\Root | Out-Null
           }
           try {
-            $trustedSignature = Get-AuthenticodeSignature -LiteralPath $installerPath
-            if ($trustedSignature.Status -ne 'Valid') {
-              throw "Authenticode verification failed: $($trustedSignature.StatusMessage)"
+            $signature = Get-AuthenticodeSignature -LiteralPath $installerPath
+            if ($null -eq $signature.SignerCertificate) {
+              throw 'The Windows installer has no Authenticode signer.'
+            }
+            if ($signature.SignerCertificate.Thumbprint -ne $expectedCertificate.Thumbprint) {
+              throw 'The Windows installer signer does not match the published Janus certificate.'
+            }
+            if ($null -eq $signature.TimeStamperCertificate) {
+              throw 'The Windows installer signature is not timestamped.'
+            }
+            if ($signature.Status -ne 'Valid') {
+              throw "Authenticode verification failed: $($signature.StatusMessage)"
             }
           } finally {
             if (-not $alreadyTrusted) {

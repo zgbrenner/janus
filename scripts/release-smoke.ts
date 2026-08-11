@@ -596,12 +596,24 @@ try {
     "Authenticode verification must be Windows-only.",
   );
   assertEqual(
+    signatureVerification["timeout-minutes"],
+    2,
+    "Authenticode verification must have a bounded timeout.",
+  );
+  assertEqual(
     typeof signatureVerification.run === "string" &&
       signatureVerification.run.includes("Get-AuthenticodeSignature") &&
       signatureVerification.run.includes("SignerCertificate.Thumbprint") &&
       signatureVerification.run.includes("Status -ne 'Valid'"),
     true,
     "Windows verification must prove signer identity and signature validity.",
+  );
+  assertEqual(
+    typeof signatureVerification.run === "string" &&
+      signatureVerification.run.indexOf("Import-Certificate") <
+        signatureVerification.run.indexOf("Get-AuthenticodeSignature"),
+    true,
+    "Windows verification must trust the exact Janus certificate before resolving the signature chain.",
   );
   assertEqual(
     hasStep(
