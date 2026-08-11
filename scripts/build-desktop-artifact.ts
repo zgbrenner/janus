@@ -1568,7 +1568,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
     buildConfig.mac = {
       target: target === "dmg" ? [target, "zip"] : [target],
       icon: "icon.icns",
-      category: "public.app-category.developer-tools",
+      category: "public.app-category.productivity",
       protocols: [
         {
           name: "Janus",
@@ -1589,7 +1589,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       target: [target],
       executableName: "janus",
       icon: "icons",
-      category: "Development",
+      category: "Office",
       // electron-builder turns these into MimeType=x-scheme-handler/<scheme>;
       // in the .desktop entry (Exec already gets %U), so browsers can hand
       // janus:// OAuth callbacks to the app.

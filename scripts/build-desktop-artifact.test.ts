@@ -364,6 +364,11 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
         assert.equal(config.artifactName, "Janus-${version}-${arch}.${ext}");
       }
       assert.equal((linux.linux as Record<string, unknown>).executableName, "janus");
+      assert.equal(
+        (mac.mac as Record<string, unknown>).category,
+        "public.app-category.productivity",
+      );
+      assert.equal((linux.linux as Record<string, unknown>).category, "Office");
       assert.deepStrictEqual((linux.linux as Record<string, unknown>).desktop, {
         entry: { StartupWMClass: "janus" },
       });
