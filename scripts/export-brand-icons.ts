@@ -203,7 +203,7 @@ export class IconExportAssetsStaleError extends Schema.TaggedErrorClass<IconExpo
   }
 }
 
-const ICON_VARIANTS = [
+export const ICON_VARIANTS = [
   {
     label: "development",
     source: BRAND_ASSET_PATHS.developmentIconComposerProject,
@@ -269,7 +269,12 @@ const renderJanusPng = (variant: (typeof ICON_VARIANTS)[number], size: number): 
 const renderJanusMacPng = async (variant: (typeof ICON_VARIANTS)[number]): Promise<Buffer> => {
   const body = await renderJanusPng(variant, 824);
   return sharp({
-    create: { width: 1024, height: 1024, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+    create: {
+      width: 1024,
+      height: 1024,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
   })
     .composite([{ input: body, left: 100, top: 100 }])
     .png({ compressionLevel: 9, adaptiveFiltering: false })
@@ -520,7 +525,9 @@ const resolveIconComposerTool = Effect.fn("iconExport.resolveIconComposerTool")(
     .map((tool) => tool.value)
     .filter((tool) => tool.supportsDesignGeneration)
     .sort((left, right) =>
-      right.bundleVersion.localeCompare(left.bundleVersion, undefined, { numeric: true }),
+      right.bundleVersion.localeCompare(left.bundleVersion, undefined, {
+        numeric: true,
+      }),
     );
   const newestTool = compatibleTools[0];
   if (newestTool) return newestTool;
@@ -623,7 +630,9 @@ const renderVariant = Effect.fn("iconExport.renderVariant")(function* (
     ),
   );
   if (!sourceExists) {
-    return yield* new IconExportSourceMissingError({ sourcePath: variant.source });
+    return yield* new IconExportSourceMissingError({
+      sourcePath: variant.source,
+    });
   }
 
   const renditionCache = new Map<string, Buffer>();

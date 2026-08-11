@@ -44,6 +44,7 @@ jobs:
       - run: vpr typecheck
       - run: vp run test
       - run: pnpm icons:check
+      - run: node scripts/release-smoke.ts
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
@@ -155,6 +156,16 @@ jobs:
             args+=(--wsl-prebuild "$GITHUB_WORKSPACE/wsl-prebuild/pty.node")
           fi
           node scripts/build-desktop-artifact.ts "${args[@]}"
+      - name: Stage macOS updater manifest
+        if: matrix.platform == 'mac'
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_manifest="release-publish/latest-mac.yml"
+          test -s "$source_manifest"
+          if [[ "${{ matrix.arch }}" == "x64" ]]; then
+            mv "$source_manifest" release-publish/latest-mac-x64.yml
+          fi
       - name: Require platform artifacts
         shell: bash
         run: |
@@ -170,7 +181,10 @@ jobs:
                 test -s release-publish/latest-mac-x64.yml
               fi
               ;;
-            linux) test -s "release-publish/Janus-${version}-x64.AppImage" ;;
+            linux)
+              test -s "release-publish/Janus-${version}-x64.AppImage"
+              test -s release-publish/latest-linux.yml
+              ;;
             win)
               test -s "release-publish/Janus-${version}-x64.exe"
               test -s "release-publish/Janus-${version}-x64.exe.blockmap"
@@ -192,6 +206,7 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -201,26 +216,18 @@ jobs:
           pattern: desktop-*
           path: release-assets
           merge-multiple: true
-      - name: Merge updater manifests and require release subjects
+      - name: Merge macOS updater manifests
         shell: bash
         run: |
           set -euo pipefail
-          version="${{ needs.preflight.outputs.version }}"
-          test -s "release-assets/Janus-${version}-arm64.dmg"
-          test -s "release-assets/Janus-${version}-arm64.zip"
-          test -s "release-assets/Janus-${version}-x64.dmg"
-          test -s "release-assets/Janus-${version}-x64.zip"
-          test -s "release-assets/Janus-${version}-x64.AppImage"
-          test -s "release-assets/Janus-${version}-x64.exe"
-          test -s "release-assets/Janus-${version}-x64.exe.blockmap"
           test -s release-assets/latest-mac.yml
           test -s release-assets/latest-mac-x64.yml
-          test -s release-assets/latest.yml
           node scripts/merge-update-manifests.ts --platform mac \
             release-assets/latest-mac.yml release-assets/latest-mac-x64.yml
           rm release-assets/latest-mac-x64.yml
           test -s release-assets/latest-mac.yml
-          test -s release-assets/latest.yml
+      - name: Validate release assets
+        run: node scripts/validate-release-assets.ts --assets-dir release-assets --version ${{ needs.preflight.outputs.version }}
       - name: Create checksums
         shell: bash
         run: |
