@@ -27,8 +27,8 @@ function sha512(content: string): string {
   return NodeCrypto.createHash("sha512").update(content).digest("base64");
 }
 
-function manifestEntry(name: string, content: string): string {
-  return `  - url: ${name}\n    sha512: ${sha512(content)}\n    size: ${Buffer.byteLength(content)}\n`;
+function manifestEntry(name: string, content: string, blockMapSize?: number): string {
+  return `  - url: ${name}\n    sha512: ${sha512(content)}\n    size: ${Buffer.byteLength(content)}\n${blockMapSize === undefined ? "" : `    blockMapSize: ${blockMapSize}\n`}`;
 }
 
 function writeFixture(): string {
@@ -48,7 +48,10 @@ function writeFixture(): string {
     NodePath.join(assetsDir, "latest-mac.yml"),
     manifest([artifactNames[0], artifactNames[1], artifactNames[2], artifactNames[3]]),
   );
-  NodeFS.writeFileSync(NodePath.join(assetsDir, "latest-linux.yml"), manifest([artifactNames[4]]));
+  NodeFS.writeFileSync(
+    NodePath.join(assetsDir, "latest-linux.yml"),
+    `version: ${version}\nfiles:\n${manifestEntry(artifactNames[4], contents.get(artifactNames[4])!, 164034)}releaseDate: '2026-08-11T00:00:00.000Z'\n`,
+  );
   NodeFS.writeFileSync(NodePath.join(assetsDir, "latest.yml"), manifest([artifactNames[5]]));
   return assetsDir;
 }

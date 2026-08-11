@@ -23,6 +23,7 @@ files:
   - url: T3-Code-0.0.4-arm64.zip
     sha512: arm64zip
     size: 125621344
+    blockMapSize: 164034
   - url: T3-Code-0.0.4-arm64.dmg
     sha512: arm64dmg
     size: 131754935
@@ -40,6 +41,7 @@ files:
   - url: T3-Code-0.0.4-x64.zip
     sha512: x64zip
     size: 132000112
+    blockMapSize: 174034
   - url: T3-Code-0.0.4-x64.dmg
     sha512: x64dmg
     size: 138148807
@@ -63,10 +65,16 @@ releaseDate: '2026-03-07T10:36:07.540Z'
         "T3-Code-0.0.4-x64.dmg",
       ],
     );
+    assert.deepStrictEqual(
+      merged.files.map((file) => file.blockMapSize),
+      [164034, undefined, 174034, undefined],
+    );
 
     const serialized = serializePlatformUpdateManifest("mac", merged);
     assert.ok(!serialized.includes("path:"));
     assert.equal((serialized.match(/- url:/g) ?? []).length, 4);
+    assert.ok(serialized.includes("blockMapSize: 164034"));
+    assert.ok(serialized.includes("blockMapSize: 174034"));
   });
 
   it("merges arm64 and x64 Windows update manifests into one multi-arch manifest", () => {
