@@ -1,4 +1,5 @@
 import { assert, it } from "@effect/vitest";
+import * as NodePath from "node:path";
 import { PNG } from "pngjs";
 
 import showcaseConfig, {
@@ -109,11 +110,11 @@ it("selects an explicit CI Android ABI without changing the local default", () =
 it("uses platform-correct default Android SDK roots", () => {
   assert.equal(
     resolveAndroidSdkRoot({ HOME: "/Users/showcase" }, "darwin"),
-    "/Users/showcase/Library/Android/sdk",
+    NodePath.join("/Users/showcase", "Library", "Android", "sdk"),
   );
   assert.equal(
     resolveAndroidSdkRoot({ HOME: "/home/showcase" }, "linux"),
-    "/home/showcase/Android/Sdk",
+    NodePath.join("/home/showcase", "Android", "Sdk"),
   );
   assert.equal(
     resolveAndroidSdkRoot(
@@ -147,8 +148,14 @@ it("expands both appearances into independent upload-ready directories", () => {
       directory: showcaseCaptureDirectory("/captures", capture),
     })),
     [
-      { appearance: "light", directory: "/captures/apple/iphone-test/light" },
-      { appearance: "dark", directory: "/captures/apple/iphone-test/dark" },
+      {
+        appearance: "light",
+        directory: NodePath.join("/captures", "apple/iphone-test", "light"),
+      },
+      {
+        appearance: "dark",
+        directory: NodePath.join("/captures", "apple/iphone-test", "dark"),
+      },
     ],
   );
 });
@@ -166,7 +173,10 @@ it("reads captured PNG dimensions from the IHDR header", () => {
   view.setUint32(20, 2868);
   view.setUint8(24, 8);
   view.setUint8(25, 2);
-  assert.deepStrictEqual(readPngDimensions(bytes), { width: 1320, height: 2868 });
+  assert.deepStrictEqual(readPngDimensions(bytes), {
+    width: 1320,
+    height: 2868,
+  });
   assert.deepStrictEqual(readPngMetadata(bytes), {
     width: 1320,
     height: 2868,
