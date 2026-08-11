@@ -33,7 +33,7 @@ Useful local checks:
 vp check
 vpr typecheck
 vp run test
-pnpm icons:check
+node scripts/export-brand-icons.ts --check
 node scripts/release-smoke.ts
 ```
 

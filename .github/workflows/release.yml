@@ -43,7 +43,7 @@ jobs:
       - run: vp check
       - run: vpr typecheck
       - run: vp run test
-      - run: pnpm icons:check
+      - run: node scripts/export-brand-icons.ts --check
       - run: node scripts/release-smoke.ts
       - uses: dtolnay/rust-toolchain@stable
         with:

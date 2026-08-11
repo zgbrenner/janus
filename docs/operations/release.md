@@ -11,7 +11,7 @@ Janus releases are GitHub-only desktop prototype builds. We do not operate relea
    vp check
    vpr typecheck
    vp run test
-   pnpm icons:check
+   node scripts/export-brand-icons.ts --check
    node scripts/release-smoke.ts
    cargo fmt --manifest-path native/resource-monitor/Cargo.toml -- --check
    cargo test --locked --manifest-path native/resource-monitor/Cargo.toml

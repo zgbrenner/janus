@@ -45,7 +45,7 @@ jobs:
           cache: true
       - run: vp install --frozen-lockfile
       - run: vp run test
-      - run: pnpm icons:check
+      - run: node scripts/export-brand-icons.ts --check
 
   desktop_build:
     name: Desktop Build
@@ -69,7 +69,7 @@ jobs:
           $preload = 'apps/desktop/dist-electron/preload.cjs'
           if (-not (Test-Path -LiteralPath $preload)) { throw "Missing $preload" }
           $source = Get-Content -Raw -LiteralPath $preload
-          foreach ($symbol in 'desktopBridge', 'getLocalEnvironmentBootstrap', 'PICK_FOLDER_CHANNEL', 'wsUrl') {
+          foreach ($symbol in 'desktopBridge', 'getLocalEnvironmentBootstraps', 'getLocalEnvironmentBearerToken', 'PICK_FOLDER_CHANNEL', 'pickFolder') {
             if (-not $source.Contains($symbol)) { throw "Preload is missing $symbol" }
           }
       - run: vp run --filter @t3tools/desktop smoke-test

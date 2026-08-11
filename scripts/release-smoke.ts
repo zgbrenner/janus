@@ -263,6 +263,38 @@ try {
     JSON.stringify(["check", "desktop_build", "release_smoke", "rust", "test"]),
     "CI job IDs must be stable.",
   );
+  const ciTest = job(ciWorkflow, "test");
+  const ciTestSteps = steps(ciTest);
+  assertEqual(
+    hasStep(ciTestSteps, (step) => step.run === "node scripts/export-brand-icons.ts --check"),
+    true,
+    "CI test job must run the icon check without a global package-manager command.",
+  );
+  assertEqual(
+    hasStep(ciTestSteps, (step) => step.run === "pnpm icons:check"),
+    false,
+    "CI test job must not require pnpm from setup-vp.",
+  );
+  const desktopBuild = job(ciWorkflow, "desktop_build");
+  const desktopBuildSteps = steps(desktopBuild);
+  const preloadGuard = desktopBuildSteps.find((step) => step.name === "Verify preload bundle");
+  assertRecord(preloadGuard, "Desktop build must verify the generated preload bundle.");
+  assertEqual(preloadGuard.shell, "pwsh", "Preload bundle guard must use PowerShell on Windows.");
+  const preloadGuardRun = preloadGuard.run;
+  assertEqual(
+    typeof preloadGuardRun === "string" &&
+      [
+        "apps/desktop/dist-electron/preload.cjs",
+        "desktopBridge",
+        "getLocalEnvironmentBootstraps",
+        "getLocalEnvironmentBearerToken",
+        "PICK_FOLDER_CHANNEL",
+        "pickFolder",
+      ].every((symbol) => preloadGuardRun.includes(symbol)) &&
+      !preloadGuardRun.includes("wsUrl"),
+    true,
+    "Preload bundle guard must require the current desktop bridge API and reject the obsolete wsUrl contract.",
+  );
 
   const securityWorkflow = workflowDocument(
     NodePath.resolve(repoRoot, ".github/workflows/security.yml"),
@@ -392,7 +424,12 @@ try {
     true,
     "Release preflight must run the release contract.",
   );
-  for (const run of ["vp check", "vpr typecheck", "vp run test", "pnpm icons:check"]) {
+  for (const run of [
+    "vp check",
+    "vpr typecheck",
+    "vp run test",
+    "node scripts/export-brand-icons.ts --check",
+  ]) {
     assertEqual(
       hasStep(preflightSteps, (step) => step.run === run),
       true,
