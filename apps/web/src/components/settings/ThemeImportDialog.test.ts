@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { describeOversizedThemeFile, MAX_THEME_FILE_BYTES } from "./ThemeImportDialog";
+import {
+  describeOversizedThemeFile,
+  MAX_THEME_FILE_BYTES,
+  themeImportFilePrompt,
+} from "./ThemeImportDialog";
 
 describe("theme import size guard", () => {
   it("accepts anything a theme file could plausibly be", () => {
@@ -17,5 +21,11 @@ describe("theme import size guard", () => {
 
   it("reports sizes just past the limit in KB", () => {
     expect(describeOversizedThemeFile(MAX_THEME_FILE_BYTES + 1)).toContain("256 KB");
+  });
+});
+
+describe("ThemeImportDialog", () => {
+  it("shows Janus-first theme file guidance before a file is selected", () => {
+    expect(themeImportFilePrompt(null)).toBe("Drop Janus or VS Code .json theme files");
   });
 });

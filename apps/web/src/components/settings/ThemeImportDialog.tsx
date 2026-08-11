@@ -53,6 +53,10 @@ export function describeOversizedThemeFile(bytes: number): string | null {
   return `That file is ${formatByteSize(bytes)}. Theme files are only a few KB, so this one was not read (limit ${formatByteSize(MAX_THEME_FILE_BYTES)}).`;
 }
 
+export function themeImportFilePrompt(fileName: string | null): string {
+  return fileName ?? "Drop Janus or VS Code .json theme files";
+}
+
 function escapeJsonHtml(value: string): string {
   return value.replace(
     /[&<>"']/g,
@@ -505,7 +509,7 @@ export function ThemeImportDialog({
                   <div className="min-w-0">
                     <p className="text-sm font-medium">Theme file</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {fileName ?? "Drop T3 Code or VS Code .json files"}
+                      {themeImportFilePrompt(fileName)}
                     </p>
                   </div>
                   {chooseButton()}
