@@ -13,6 +13,7 @@ import {
   MAX_HIDDEN_MOUNTED_PREVIEW_THREADS,
   MAX_HIDDEN_MOUNTED_TERMINAL_THREADS,
   branchMismatchKey,
+  buildLocalDraftThread,
   buildExpiredTerminalContextToastCopy,
   buildLoadingThreadFromShell,
   buildThreadTurnInterruptInput,
@@ -124,6 +125,30 @@ const readySession = {
   lastError: null,
   updatedAt: "2026-03-29T00:00:10.000Z",
 };
+
+describe("buildLocalDraftThread", () => {
+  it("labels a new local draft as a task", () => {
+    const thread = buildLocalDraftThread(
+      threadId,
+      {
+        threadId,
+        environmentId,
+        projectId,
+        logicalProjectKey: "project-1",
+        runtimeMode: "full-access",
+        interactionMode: "default",
+        createdAt: now,
+        branch: null,
+        worktreePath: null,
+        envMode: "local",
+        startFromOrigin: false,
+      },
+      makeThread().modelSelection,
+    );
+
+    expect(thread.title).toBe("New task");
+  });
+});
 
 describe("buildLoadingThreadFromShell", () => {
   it("preserves shell metadata and supplies empty detail collections", () => {

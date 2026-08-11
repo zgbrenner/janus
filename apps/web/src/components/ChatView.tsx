@@ -5176,7 +5176,7 @@ function ChatViewContent(props: ChatViewProps) {
       } else if (composerElementContextsSnapshot.length > 0) {
         titleSeed = formatElementContextLabel(composerElementContextsSnapshot[0]!);
       } else {
-        titleSeed = "New thread";
+        titleSeed = "New task";
       }
     }
     const title = truncate(titleSeed);
@@ -5794,7 +5794,7 @@ function ChatViewContent(props: ChatViewProps) {
       });
       if (cleanupResult._tag === "Failure" && !isAtomCommandInterrupted(cleanupResult)) {
         console.warn(
-          "Failed to clean up implementation thread after start failure.",
+          "Failed to clean up implementation task after start failure.",
           squashAtomCommandFailure(cleanupResult),
         );
       }
@@ -5803,11 +5803,11 @@ function ChatViewContent(props: ChatViewProps) {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Could not start implementation thread",
+            title: "Could not start implementation task",
             description:
               error instanceof Error
                 ? error.message
-                : "An error occurred while creating the new thread.",
+                : "An error occurred while creating the new task.",
           }),
         );
       }
@@ -5845,7 +5845,7 @@ function ChatViewContent(props: ChatViewProps) {
         currentProviderInstanceId: activeThread.session?.providerInstanceId ?? null,
         nextModelSelection: { instanceId, model },
       });
-      return reason ? `${reason.description} Start a new thread to use this model.` : null;
+      return reason ? `${reason.description} Start a new task to use this model.` : null;
     },
     [activeThread, providerStatuses],
   );
@@ -6085,7 +6085,7 @@ function ChatViewContent(props: ChatViewProps) {
     ) : activeRightPanelSurface?.kind === "pull-request" && !supportsPullRequests ? (
       <PullRequestsUnavailableState
         title="Pull requests unavailable"
-        error="Update this environment's T3 Code server to browse pull requests."
+        error="Update this environment's Janus server to browse pull requests."
       />
     ) : activeRightPanelSurface?.kind === "pull-request" ? (
       // No onClose: the surface tab's own X owns closing here, and a second X in the header
