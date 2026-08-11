@@ -199,6 +199,25 @@ function assertPackageVersion(path: string, version: string): void {
   }
 }
 
+function assertNoTrackedGitlinks(root: string): void {
+  const stagedPaths = NodeChildProcess.execFileSync("git", ["ls-files", "--stage"], {
+    cwd: root,
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  const gitlinkPaths = stagedPaths
+    .split(/\r?\n/)
+    .flatMap((line) => /^160000 [0-9a-f]{40} \d+\t(.+)$/.exec(line)?.[1] ?? []);
+
+  if (gitlinkPaths.length > 0) {
+    throw new Error(
+      `Release checkout must not track gitlinks or submodules: ${gitlinkPaths.join(", ")}.`,
+    );
+  }
+}
+
+assertNoTrackedGitlinks(repoRoot);
+
 const tempRoot = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "t3-release-smoke-"));
 
 try {
