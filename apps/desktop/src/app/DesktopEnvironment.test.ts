@@ -51,24 +51,51 @@ describe("DesktopEnvironment", () => {
       );
 
       assert.equal(environment.isDevelopment, true);
-      assert.equal(environment.appDataDirectory, "/Users/alice/Library/Application Support");
+      assert.equal(
+        environment.appDataDirectory,
+        environment.path.join("/Users/alice", "Library", "Application Support"),
+      );
       assert.equal(environment.baseDir, "/tmp/t3");
-      assert.equal(environment.stateDir, "/tmp/t3/userdata");
-      assert.equal(environment.desktopSettingsPath, "/tmp/t3/userdata/desktop-settings.json");
-      assert.equal(environment.clientSettingsPath, "/tmp/t3/userdata/client-settings.json");
+      assert.equal(environment.stateDir, environment.path.join("/tmp/t3", "userdata"));
+      assert.equal(
+        environment.desktopSettingsPath,
+        environment.path.join("/tmp/t3", "userdata", "desktop-settings.json"),
+      );
+      assert.equal(
+        environment.clientSettingsPath,
+        environment.path.join("/tmp/t3", "userdata", "client-settings.json"),
+      );
       assert.equal(
         environment.savedEnvironmentRegistryPath,
-        "/tmp/t3/userdata/saved-environments.json",
+        environment.path.join("/tmp/t3", "userdata", "saved-environments.json"),
       );
-      assert.equal(environment.serverSettingsPath, "/tmp/t3/userdata/settings.json");
-      assert.equal(environment.logDir, "/tmp/t3/userdata/logs");
-      assert.equal(environment.browserArtifactsDir, "/tmp/t3/userdata/browser-artifacts");
-      assert.equal(environment.rootDir, "/repo");
-      assert.equal(environment.appRoot, "/repo");
-      assert.equal(environment.backendEntryPath, "/repo/apps/server/dist/bin.mjs");
-      assert.equal(environment.backendCwd, "/repo");
-      assert.equal(environment.appUserModelId, "com.t3tools.t3code.dev");
-      assert.equal(environment.linuxWmClass, "t3code-dev");
+      assert.equal(
+        environment.serverSettingsPath,
+        environment.path.join("/tmp/t3", "userdata", "settings.json"),
+      );
+      assert.equal(environment.logDir, environment.path.join("/tmp/t3", "userdata", "logs"));
+      assert.equal(
+        environment.browserArtifactsDir,
+        environment.path.join("/tmp/t3", "userdata", "browser-artifacts"),
+      );
+      assert.equal(environment.rootDir, environment.path.resolve("/repo"));
+      assert.equal(environment.appRoot, environment.path.resolve("/repo"));
+      assert.equal(
+        environment.backendEntryPath,
+        environment.path.join(
+          environment.path.resolve("/repo"),
+          "apps",
+          "server",
+          "dist",
+          "bin.mjs",
+        ),
+      );
+      assert.equal(environment.backendCwd, environment.path.resolve("/repo"));
+      assert.equal(environment.displayName, "Janus Dev");
+      assert.equal(environment.appUserModelId, "com.zgbrenner.janus.dev");
+      assert.equal(environment.linuxDesktopEntryName, "janus-dev.desktop");
+      assert.equal(environment.linuxWmClass, "janus-dev");
+      assert.equal(environment.userDataDirName, "janus-dev");
       assert.deepEqual(
         Option.map(environment.devServerUrl, (url) => url.href),
         Option.some("http://localhost:5173/"),
@@ -91,10 +118,21 @@ describe("DesktopEnvironment", () => {
       );
 
       assert.equal(environment.isDevelopment, false);
-      assert.equal(environment.stateDir, "/tmp/t3/userdata");
-      assert.equal(environment.logDir, "/tmp/t3/userdata/logs");
-      assert.equal(environment.browserArtifactsDir, "/tmp/t3/userdata/browser-artifacts");
-      assert.equal(environment.serverSettingsPath, "/tmp/t3/userdata/settings.json");
+      assert.equal(environment.displayName, "Janus");
+      assert.equal(environment.appUserModelId, "com.zgbrenner.janus");
+      assert.equal(environment.linuxDesktopEntryName, "janus.desktop");
+      assert.equal(environment.linuxWmClass, "janus");
+      assert.equal(environment.userDataDirName, "janus");
+      assert.equal(environment.stateDir, environment.path.join("/tmp/t3", "userdata"));
+      assert.equal(environment.logDir, environment.path.join("/tmp/t3", "userdata", "logs"));
+      assert.equal(
+        environment.browserArtifactsDir,
+        environment.path.join("/tmp/t3", "userdata", "browser-artifacts"),
+      );
+      assert.equal(
+        environment.serverSettingsPath,
+        environment.path.join("/tmp/t3", "userdata", "settings.json"),
+      );
     }),
   );
 
@@ -106,8 +144,8 @@ describe("DesktopEnvironment", () => {
       );
       const production = yield* makeEnvironment();
 
-      assert.equal(development.stateDir, "/Users/alice/.t3/dev");
-      assert.equal(production.stateDir, "/Users/alice/.t3/userdata");
+      assert.equal(development.stateDir, development.path.join("/Users/alice", ".t3", "dev"));
+      assert.equal(production.stateDir, production.path.join("/Users/alice", ".t3", "userdata"));
     }),
   );
 
@@ -121,7 +159,7 @@ describe("DesktopEnvironment", () => {
         },
       );
 
-      assert.equal(environment.appUserModelId, "com.t3tools.t3code.dev.local");
+      assert.equal(environment.appUserModelId, "com.zgbrenner.janus.dev");
     }),
   );
 
@@ -140,7 +178,7 @@ describe("DesktopEnvironment", () => {
       );
       assert.deepEqual(
         environment.resolvePickFolderDefaultPath({ initialPath: "~/project" }),
-        Option.some("/Users/alice/project"),
+        Option.some(environment.path.join("/Users/alice", "project")),
       );
     }),
   );

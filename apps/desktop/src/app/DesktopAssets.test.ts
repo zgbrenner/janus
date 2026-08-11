@@ -25,16 +25,16 @@ describe("DesktopAssets", () => {
   it.effect("preserves the failed asset candidate and filesystem cause", () =>
     Effect.gen(function* () {
       const fileName = "custom.bin";
-      const candidatePath = "/repo/apps/desktop/resources/custom.bin";
       const cause = PlatformError.systemError({
         _tag: "PermissionDenied",
         module: "FileSystem",
         method: "exists",
-        pathOrDescriptor: candidatePath,
+        pathOrDescriptor: "desktop asset candidate",
         description: "private filesystem diagnostic",
       });
       const fileSystemLayer = FileSystem.layerNoop({
-        exists: (path) => (path === candidatePath ? Effect.fail(cause) : Effect.succeed(false)),
+        exists: (path) =>
+          path.endsWith("custom.bin") ? Effect.fail(cause) : Effect.succeed(false),
       });
       const assetsLayer = DesktopAssets.layer.pipe(
         Layer.provide(Layer.merge(fileSystemLayer, environmentLayer)),
@@ -45,11 +45,11 @@ describe("DesktopAssets", () => {
 
       assert.instanceOf(error, DesktopAssets.DesktopAssetProbeError);
       assert.equal(error.fileName, fileName);
-      assert.equal(error.candidatePath, candidatePath);
+      assert.include(error.candidatePath.replaceAll("\\", "/"), "/resources/custom.bin");
       assert.strictEqual(error.cause, cause);
       assert.equal(
         error.message,
-        `Failed to probe desktop asset "${fileName}" at ${candidatePath}.`,
+        `Failed to probe desktop asset "${fileName}" at ${error.candidatePath}.`,
       );
       assert.notInclude(error.message, "private filesystem diagnostic");
     }),

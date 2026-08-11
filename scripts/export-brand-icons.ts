@@ -12,6 +12,7 @@ import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 import { Command, Flag } from "effect/unstable/cli";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import sharp from "sharp";
 
 import { BRAND_ASSET_PATHS, DEVELOPMENT_PUBLIC_ICON_OVERRIDES } from "./lib/brand-assets.ts";
 import { encodePngIco, readPngDimensions, WINDOWS_ICON_SIZES } from "./lib/icon-export.ts";
@@ -246,6 +247,61 @@ const ICON_VARIANTS = [
     },
   },
 ] as const satisfies ReadonlyArray<IconVariant>;
+
+const JANUS_VARIANT_COLORS = {
+  development: { background: "#254F43", accent: "#B7D6B0" },
+  preview: { background: "#3A355A", accent: "#C7C1EE" },
+  production: { background: "#18352A", accent: "#A9C6A4" },
+} as const;
+
+export const renderJanusSvg = (variant: (typeof ICON_VARIANTS)[number], size: number): Buffer => {
+  const colors = JANUS_VARIANT_COLORS[variant.label];
+  return Buffer.from(
+    `<svg width="${size}" height="${size}" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="28" fill="${colors.background}"/><path d="M31 30H57V47H48V82C48 90 51 94 60 94C69 94 72 90 72 82V47H63V30H89V82C89 101 78 111 60 111C42 111 31 101 31 82V30Z" fill="#F4F1E8"/><path d="M63 30H89V47H80V82C80 87 79 91 77 95C75 91 72 88 68 86C70 85 72 83 72 82V47H63V30Z" fill="${colors.accent}"/></svg>`,
+  );
+};
+
+const renderJanusPng = (variant: (typeof ICON_VARIANTS)[number], size: number): Promise<Buffer> =>
+  sharp(renderJanusSvg(variant, size))
+    .png({ compressionLevel: 9, adaptiveFiltering: false })
+    .toBuffer();
+
+const renderJanusMacPng = async (variant: (typeof ICON_VARIANTS)[number]): Promise<Buffer> => {
+  const body = await renderJanusPng(variant, 824);
+  return sharp({
+    create: { width: 1024, height: 1024, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  })
+    .composite([{ input: body, left: 100, top: 100 }])
+    .png({ compressionLevel: 9, adaptiveFiltering: false })
+    .toBuffer();
+};
+
+export const renderJanusVariant = async (
+  variant: (typeof ICON_VARIANTS)[number],
+): Promise<Map<string, Buffer>> => {
+  const universal = await renderJanusPng(variant, 1024);
+  const favicon16 = await renderJanusPng(variant, 16);
+  const favicon32 = await renderJanusPng(variant, 32);
+  const appleTouch = await renderJanusPng(variant, 180);
+  const ico = encodePngIco(
+    await Promise.all(
+      WINDOWS_ICON_SIZES.map(async (size) => ({
+        size,
+        contents: await renderJanusPng(variant, size),
+      })),
+    ),
+  );
+  return new Map([
+    [variant.outputs.ios, universal],
+    [variant.outputs.universal, universal],
+    [variant.outputs.macos, await renderJanusMacPng(variant)],
+    [variant.outputs.appleTouch, appleTouch],
+    [variant.outputs.favicon16, favicon16],
+    [variant.outputs.favicon32, favicon32],
+    [variant.outputs.faviconIco, ico],
+    [variant.outputs.windowsIco, ico],
+  ]);
+};
 
 const MACOS_EXPORT_CODEX_PROMPT = [
   "Use [@Computer](plugin://computer-use@openai-bundled) and the Icon Composer app to export the three macOS app icons in this repository.",
@@ -718,34 +774,15 @@ const isCurrent = Effect.fn("iconExport.isCurrent")(function* (
 export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (checkOnly: boolean) {
   const fs = yield* FileSystem.FileSystem;
   const repositoryRoot = yield* RepositoryRoot;
-  const tool = yield* resolveIconComposerTool();
-  const temporaryDirectory = yield* fs
-    .makeTempDirectoryScoped({
-      prefix: "t3-icon-export-",
-    })
-    .pipe(
-      Effect.mapError(
-        (cause) =>
-          new IconExportFileSystemError({
-            operation: "make-temp-directory",
-            path: "system temporary directory",
-            cause,
-          }),
-      ),
-    );
-  yield* Console.log(
-    `Exporting icons with Icon Composer ${tool.version}, design generation ${DESIGN_GENERATION}.`,
-  );
+  yield* Console.log("Exporting deterministic Janus SVG icon renditions with Sharp.");
 
   const generated = new Map<string, Buffer>();
   for (const variant of ICON_VARIANTS) {
-    yield* Console.log(`Rendering ${variant.label} from ${variant.source}...`);
-    const variantAssets = yield* renderVariant(
-      tool.path,
-      repositoryRoot,
-      temporaryDirectory,
-      variant,
-    );
+    yield* Console.log(`Rendering ${variant.label} Janus icon renditions...`);
+    const variantAssets = yield* Effect.tryPromise({
+      try: () => renderJanusVariant(variant),
+      catch: (cause) => new IconExportEncodingError({ variant: variant.label, cause }),
+    });
     for (const [relativePath, contents] of variantAssets) {
       generated.set(relativePath, contents);
     }
@@ -761,6 +798,14 @@ export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (checkOn
     generated.set(override.targetRelativePath, sourceContents);
   }
 
+  const productionWindowsIcon = generated.get(BRAND_ASSET_PATHS.productionWindowsIconIco);
+  const productionMacIcon = generated.get(BRAND_ASSET_PATHS.productionMacIconPng);
+  if (productionWindowsIcon === undefined || productionMacIcon === undefined) {
+    return yield* Effect.die(new Error("Generated production Janus icon assets are missing."));
+  }
+  generated.set("apps/desktop/resources/icon.ico", productionWindowsIcon);
+  generated.set("apps/desktop/resources/icon.png", productionMacIcon);
+
   if (checkOnly) {
     const stale = yield* Effect.filter(
       [...generated.entries()],
@@ -774,7 +819,6 @@ export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (checkOn
       });
     }
     yield* Console.log(`All ${generated.size} generated icon assets are current.`);
-    yield* logManualMacOsExportInstructions();
     return;
   }
 
@@ -784,7 +828,6 @@ export const exportBrandIcons = Effect.fn("exportBrandIcons")(function* (checkOn
     { concurrency: 1, discard: true },
   );
   yield* Console.log(`Updated ${generated.size} generated icon assets.`);
-  yield* logManualMacOsExportInstructions();
 });
 
 export const exportBrandIconsCommand = Command.make(
@@ -798,7 +841,7 @@ export const exportBrandIconsCommand = Command.make(
   ({ check }) => exportBrandIcons(check).pipe(Effect.scoped),
 ).pipe(
   Command.withDescription(
-    "Export development, preview, and production assets from Icon Composer projects.",
+    "Export deterministic development, preview, and production Janus icon assets.",
   ),
 );
 

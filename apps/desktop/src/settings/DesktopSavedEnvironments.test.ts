@@ -4,6 +4,7 @@ import { EnvironmentId, type PersistedSavedEnvironmentRecord } from "@t3tools/co
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
+import * as Path from "effect/Path";
 import * as Option from "effect/Option";
 import * as PlatformError from "effect/PlatformError";
 import * as Schema from "effect/Schema";
@@ -401,10 +402,11 @@ describe("DesktopSavedEnvironments", () => {
   it.effect("reports saved environment filesystem reads separately from document decoding", () =>
     Effect.gen(function* () {
       const baseFileSystem = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
       const baseDir = yield* baseFileSystem.makeTempDirectoryScoped({
         prefix: "t3-desktop-saved-environments-test-",
       });
-      const registryPath = `${baseDir}/userdata/saved-environments.json`;
+      const registryPath = path.join(baseDir, "userdata", "saved-environments.json");
       const permissionError = PlatformError.systemError({
         _tag: "PermissionDenied",
         module: "FileSystem",
@@ -433,6 +435,7 @@ describe("DesktopSavedEnvironments", () => {
   it.effect("reports the failed saved environment write operation and path", () =>
     Effect.gen(function* () {
       const baseFileSystem = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
       const baseDir = yield* baseFileSystem.makeTempDirectoryScoped({
         prefix: "t3-desktop-saved-environments-test-",
       });
@@ -440,7 +443,7 @@ describe("DesktopSavedEnvironments", () => {
         _tag: "PermissionDenied",
         module: "FileSystem",
         method: "makeDirectory",
-        pathOrDescriptor: `${baseDir}/userdata`,
+        pathOrDescriptor: path.join(baseDir, "userdata"),
       });
       const fileSystemLayer = Layer.succeed(
         FileSystem.FileSystem,
@@ -456,11 +459,11 @@ describe("DesktopSavedEnvironments", () => {
       const error = yield* savedEnvironments.setRegistry([savedRegistryRecord]).pipe(Effect.flip);
       assert.instanceOf(error, DesktopSavedEnvironments.DesktopSavedEnvironmentsWriteError);
       assert.equal(error.operation, "create-directory");
-      assert.equal(error.path, `${baseDir}/userdata`);
+      assert.equal(error.path, path.join(baseDir, "userdata"));
       assert.strictEqual(error.cause, permissionError);
       assert.equal(
         error.message,
-        `Desktop saved-environment write failed during create-directory at ${baseDir}/userdata.`,
+        `Desktop saved-environment write failed during create-directory at ${path.join(baseDir, "userdata")}.`,
       );
       assert.notEqual(error.message, permissionError.message);
     }).pipe(Effect.provide(NodeServices.layer), Effect.scoped),
