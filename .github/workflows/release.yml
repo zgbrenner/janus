@@ -213,6 +213,7 @@ jobs:
           if ($normalizedOutput -notmatch 'root certificate which is not trusted') {
             throw 'SignTool did not report the expected self-signed trust-chain result.'
           }
+          exit 0
       - name: Stage macOS updater manifest
         if: matrix.platform == 'mac'
         shell: bash

@@ -607,7 +607,8 @@ try {
       signatureVerification.run.includes("SHA1 hash: $expectedThumbprint") &&
       signatureVerification.run.includes("The signature is timestamped") &&
       signatureVerification.run.includes("root certificate which is not trusted") &&
-      signatureVerification.run.includes("$verificationExitCode -ne 1"),
+      signatureVerification.run.includes("$verificationExitCode -ne 1") &&
+      signatureVerification.run.trimEnd().endsWith("exit 0"),
     true,
     "Windows verification must prove signer identity, timestamping, and the expected self-signed trust result.",
   );
