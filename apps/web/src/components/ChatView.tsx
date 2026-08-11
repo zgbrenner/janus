@@ -12,6 +12,7 @@ import {
   ProviderInstanceId,
   type ServerProvider,
   type ResolvedKeybindingsConfig,
+  type ScopedProjectRef,
   type ScopedThreadRef,
   type ThreadId,
   type TurnId,
@@ -1189,6 +1190,38 @@ export function applyTaskStarterSelection(input: {
   (input.requestFrame ?? requestAnimationFrame)(() => input.composerRef.current?.focusAtEnd());
 }
 
+/** The draft hero's starter interaction, kept beside the composer it updates. */
+export function ChatViewTaskStarterHero(props: {
+  readonly activeProjectRef: ScopedProjectRef | null;
+  readonly activeProjectTitle: string | null;
+  readonly composerDraftTarget: ScopedThreadRef | DraftId;
+  readonly composerRef: React.RefObject<Pick<
+    ChatComposerHandle,
+    "focusAtEnd" | "resetCursorState"
+  > | null>;
+}): React.JSX.Element {
+  const setPrompt = useComposerDraftStore((store) => store.setPrompt);
+  const selectTaskStarter = useCallback(
+    (prompt: string) => {
+      applyTaskStarterSelection({
+        composerDraftTarget: props.composerDraftTarget,
+        prompt,
+        setPrompt,
+        composerRef: props.composerRef,
+      });
+    },
+    [props.composerDraftTarget, props.composerRef, setPrompt],
+  );
+
+  return (
+    <DraftHeroHeadline
+      activeProjectRef={props.activeProjectRef}
+      activeProjectTitle={props.activeProjectTitle}
+      onStarterSelect={selectTaskStarter}
+    />
+  );
+}
+
 function ChatViewContent(props: ChatViewProps) {
   const {
     environmentId,
@@ -1338,17 +1371,6 @@ function ChatViewContent(props: ChatViewProps) {
   const composerElementContextsRef = useRef<ElementContextDraft[]>([]);
   const localComposerRef = useRef<ChatComposerHandle | null>(null);
   const composerRef = useComposerHandleContext() ?? localComposerRef;
-  const selectTaskStarter = useCallback(
-    (prompt: string) => {
-      applyTaskStarterSelection({
-        composerDraftTarget,
-        prompt,
-        setPrompt: setComposerDraftPrompt,
-        composerRef,
-      });
-    },
-    [composerDraftTarget, composerRef, setComposerDraftPrompt],
-  );
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [expandedImage, setExpandedImage] = useState<ExpandedImagePreview | null>(null);
   const [optimisticUserMessages, setOptimisticUserMessages] = useState<ChatMessage[]>([]);
@@ -6280,10 +6302,11 @@ function ChatViewContent(props: ChatViewProps) {
                             : undefined
                         }
                       >
-                        <DraftHeroHeadline
+                        <ChatViewTaskStarterHero
                           activeProjectRef={activeProjectRef}
                           activeProjectTitle={activeProject?.title ?? null}
-                          onStarterSelect={selectTaskStarter}
+                          composerDraftTarget={composerDraftTarget}
+                          composerRef={composerRef}
                         />
                       </div>
                       <ComposerBannerStack className="relative z-0" items={composerBannerItems} />

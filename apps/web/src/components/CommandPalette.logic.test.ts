@@ -111,7 +111,7 @@ describe("enumerateCommandPaletteItems", () => {
 });
 
 describe("Janus command palette vocabulary", () => {
-  it("finds new task and workspace actions from their primary terms", () => {
+  it("finds primary Janus terms and retained compatibility aliases", () => {
     const actions: CommandPaletteGroup = {
       value: "actions",
       label: "Actions",
@@ -138,6 +138,8 @@ describe("Janus command palette vocabulary", () => {
     for (const [query, expected] of [
       ["new task", "action:new-thread"],
       ["workspace", "action:add-project"],
+      ["new thread", "action:new-thread"],
+      ["project", "action:add-project"],
     ] as const) {
       const groups = filterCommandPaletteGroups({
         activeGroups: [actions],
