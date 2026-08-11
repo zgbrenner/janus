@@ -322,20 +322,16 @@ function legacyThemeMode(theme: ThemePreference): ThemeAppearance | null {
  * Maintainer palettes use product color roles rather than Tailwind or component
  * names so the same definitions can feed other clients and native surfaces.
  */
-// Measured from the live t3.chat default theme. Translucent chat surfaces are
-// flattened over --chat-background so this opaque palette reproduces the
-// pixels users see after T3 Chat's blur and noise layers are composited.
-// Foreground pairs deviate where necessary to keep normal text at WCAG AA.
+// Janus keeps warm paper and ivory surfaces opaque so color roles remain
+// predictable across the workspace shell. Foreground pairs maintain WCAG AA.
 const T3_CHAT_LIGHT_COLORS: ThemeColors = {
   canvas: "#f7f3ea",
-  // T3 Code's workspace header belongs to the chat panel, so keep it seamless
-  // with the light chat canvas rather than mapping it to T3 Chat's outer shell.
+  // The workspace header remains continuous with Janus's paper canvas.
   chrome: "#f7f3ea",
   toolbar: "#f7f3ea",
   toolbarForeground: "#29352b",
   toolbarBorder: "#ded7ca",
-  // T3 Chat's light chrome controls sit on its pale gradient-noise surface,
-  // not the substantially darker solid accent token.
+  // Light chrome controls use a quiet ivory surface instead of the forest action.
   toolbarControl: "#ece7dc",
   toolbarControlForeground: "#29352b",
   toolbarControlHover: "#dedbce",
@@ -372,12 +368,10 @@ const T3_CHAT_LIGHT_COLORS: ThemeColors = {
   messageAction: "#3d6b4d",
   messageActionForeground: "#ffffff",
   messageActionHover: "#31593f",
-  // T3 Chat uses a light lavender code surface in light mode. Keeping the
-  // dark plum pair here also leaked the dark palette into T3 Code's diffs.
+  // Code remains a warm neutral surface so developer detail stays readable.
   codeBackground: "#f1ede3",
   codeForeground: "#344437",
-  // The live sidebar is transparent over T3 Chat's outer shell. Use that
-  // rendered shell color rather than its unused, darker sidebar token.
+  // The sidebar is a distinct but quiet paper surface for workspace navigation.
   sidebar: "#eee9df",
   sidebarForeground: "#29352b",
   sidebarMutedForeground: "#5e695d",
@@ -396,8 +390,7 @@ const T3_CHAT_LIGHT_COLORS: ThemeColors = {
 
 const T3_CHAT_DARK_COLORS: ThemeColors = {
   canvas: "#20261f",
-  // T3 Code's workspace header belongs to the chat panel, so keep it seamless
-  // with the canvas rather than mapping it to T3 Chat's outer shell.
+  // The workspace header remains continuous with Janus's charcoal canvas.
   chrome: "#20261f",
   toolbar: "#20261f",
   toolbarForeground: "#f2f3eb",
@@ -405,11 +398,9 @@ const T3_CHAT_DARK_COLORS: ThemeColors = {
   toolbarControl: "#2c352c",
   toolbarControlForeground: "#dfe7dc",
   toolbarControlHover: "#39433a",
-  // Cards and panels stay in T3 Chat's plum surface family. Near-black here
-  // made the right-panel surface picker look unrelated to the chat canvas.
+  // Cards lift gently from tinted charcoal without falling back to pure black.
   surface: "#293129",
-  // Pre-composited for the composer's 80% glass layer; this resolves to the
-  // measured #29232d input fill over the canvas.
+  // Raised surfaces keep the composer distinct while remaining within the charcoal family.
   surfaceRaised: "#2e372e",
   surfaceOverlay: "#161b16",
   text: "#f1f4ec",
@@ -442,13 +433,10 @@ const T3_CHAT_DARK_COLORS: ThemeColors = {
   messageAction: "#a4d4a8",
   messageActionForeground: "#102017",
   messageActionHover: "#b3ddba",
-  // Diffs and file previews are full workspace surfaces in T3 Code. Keep them
-  // continuous with the themed canvas instead of dropping to near-black.
+  // Diffs and file previews retain strong contrast without breaking the charcoal field.
   codeBackground: "#171d17",
   codeForeground: "#d5e0d1",
-  // The live sidebar starts from #131314, then gains its hue from a pink
-  // gradient/noise stack. This pre-grain base lands on the same #1a131a
-  // visible shell color after our surface-grain layer is composited.
+  // Navigation uses a slightly deeper forest-tinted charcoal for separation.
   sidebar: "#1b211b",
   sidebarForeground: "#eef1e9",
   sidebarMutedForeground: "#c0c9be",
@@ -456,8 +444,7 @@ const T3_CHAT_DARK_COLORS: ThemeColors = {
   sidebarRowHover: "#293129",
   sidebarRowActive: "#293129",
   sidebarRowSelected: "#293129",
-  // T3 Chat draws the chat panel edge in this muted pink. The resize rail uses
-  // the same role on hover, so it stays pink instead of falling back to black.
+  // The sidebar edge and resize rail use the same quiet forest-tinted boundary.
   sidebarBorder: "#344034",
   terminalBackground: "#20261f",
   terminalForeground: "#f1f4ec",
@@ -597,7 +584,7 @@ const T3_CODE_DARK_THEME_COLORS: ThemeColors = {
 /**
  * The standard T3 Code look as a theme palette, for seeding a new theme when
  * no theme is installed. Distinct from {@link getDefaultThemeColors}, which
- * carries the flagship T3 Chat palette used to fill roles omitted by theme
+ * carries the flagship Janus palette used to fill roles omitted by theme
  * files.
  */
 export function getStandardThemeColors(appearance: ThemeAppearance): ThemeColors {
@@ -1307,7 +1294,7 @@ export function getDefaultThemeColors(appearance: ThemeAppearance): ThemeColors 
 }
 
 /**
- * A companion action color in the T3 Chat mold. This gives send buttons,
+ * A companion Janus forest action color. This gives send buttons,
  * status pills, and theme previews a second voice; foreground and hover follow
  * the same rules as the managed generator.
  */

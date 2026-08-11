@@ -7,7 +7,9 @@ import {
   enumerateCommandPaletteItems,
   filterCommandPaletteGroups,
   reduceCommandPaletteUiState,
+  taskSearchTerms,
   type CommandPaletteGroup,
+  workspaceSearchTerms,
 } from "./CommandPalette.logic";
 
 describe("reduceCommandPaletteUiState", () => {
@@ -105,6 +107,48 @@ describe("enumerateCommandPaletteItems", () => {
       "thread.jump.9",
       undefined,
     ]);
+  });
+});
+
+describe("Janus command palette vocabulary", () => {
+  it("finds new task and workspace actions from their primary terms", () => {
+    const actions: CommandPaletteGroup = {
+      value: "actions",
+      label: "Actions",
+      items: [
+        {
+          kind: "action",
+          value: "action:new-thread",
+          searchTerms: taskSearchTerms("new thread", "thread", "chat"),
+          title: "New task",
+          icon: null,
+          run: async () => undefined,
+        },
+        {
+          kind: "action",
+          value: "action:add-project",
+          searchTerms: workspaceSearchTerms("add project", "project", "folder"),
+          title: "Add workspace",
+          icon: null,
+          run: async () => undefined,
+        },
+      ],
+    };
+
+    for (const [query, expected] of [
+      ["new task", "action:new-thread"],
+      ["workspace", "action:add-project"],
+    ] as const) {
+      const groups = filterCommandPaletteGroups({
+        activeGroups: [actions],
+        query,
+        isInSubmenu: false,
+        projectSearchItems: [],
+        threadSearchItems: [],
+      });
+
+      expect(groups[0]?.items.map((item) => item.value)).toEqual([expected]);
+    }
   });
 });
 

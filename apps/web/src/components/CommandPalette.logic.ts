@@ -130,6 +130,16 @@ export function normalizeSearchText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/** Keep user-facing Janus vocabulary ahead of retained compatibility aliases. */
+export function taskSearchTerms(...legacyTerms: string[]): string[] {
+  return ["new task", "task", ...legacyTerms];
+}
+
+/** Keep Workspace discoverable while preserving project-oriented search habits. */
+export function workspaceSearchTerms(...legacyTerms: string[]): string[] {
+  return ["workspace", "workspaces", ...legacyTerms];
+}
+
 export function buildProjectActionItems(input: {
   projects: ReadonlyArray<Project>;
   valuePrefix: string;
@@ -291,14 +301,14 @@ export function filterCommandPaletteGroups(input: {
     if (input.projectSearchItems.length > 0) {
       searchableGroups.push({
         value: "projects-search",
-        label: "Projects",
+        label: "Workspaces",
         items: input.projectSearchItems,
       });
     }
     if (input.threadSearchItems.length > 0) {
       searchableGroups.push({
         value: "threads-search",
-        label: "Threads",
+        label: "Tasks",
         items: input.threadSearchItems,
       });
     }
@@ -391,7 +401,7 @@ export function buildRootGroups(input: {
   if (input.recentThreadItems.length > 0) {
     groups.push({
       value: "recent-threads",
-      label: "Recent Threads",
+      label: "Recent tasks",
       items: input.recentThreadItems,
     });
   }
@@ -401,9 +411,9 @@ export function buildRootGroups(input: {
 export function getCommandPaletteInputPlaceholder(mode: CommandPaletteMode): string {
   switch (mode) {
     case "root":
-      return "Search commands, projects, and threads...";
+      return "Search actions, workspaces, and tasks...";
     case "root-browse":
-      return "Enter project path (e.g. ~/projects/my-app)";
+      return "Enter workspace path (e.g. ~/projects/my-app)";
     case "submenu":
       return "Search...";
     case "submenu-browse":

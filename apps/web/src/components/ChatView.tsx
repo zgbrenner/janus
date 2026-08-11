@@ -1170,6 +1170,25 @@ function chatActionErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "An error occurred.";
 }
 
+/** Applies a starter locally; dispatch remains exclusively owned by the composer submit path. */
+export function applyTaskStarterSelection(input: {
+  readonly composerDraftTarget: ScopedThreadRef | DraftId;
+  readonly prompt: string;
+  readonly setPrompt: (target: ScopedThreadRef | DraftId, prompt: string) => void;
+  readonly composerRef: React.RefObject<Pick<
+    ChatComposerHandle,
+    "focusAtEnd" | "resetCursorState"
+  > | null>;
+  readonly requestFrame?: (callback: FrameRequestCallback) => number;
+}): void {
+  input.setPrompt(input.composerDraftTarget, input.prompt);
+  input.composerRef.current?.resetCursorState({
+    cursor: input.prompt.length,
+    prompt: input.prompt,
+  });
+  (input.requestFrame ?? requestAnimationFrame)(() => input.composerRef.current?.focusAtEnd());
+}
+
 function ChatViewContent(props: ChatViewProps) {
   const {
     environmentId,
@@ -1321,9 +1340,12 @@ function ChatViewContent(props: ChatViewProps) {
   const composerRef = useComposerHandleContext() ?? localComposerRef;
   const selectTaskStarter = useCallback(
     (prompt: string) => {
-      setComposerDraftPrompt(composerDraftTarget, prompt);
-      composerRef.current?.resetCursorState({ cursor: prompt.length, prompt });
-      requestAnimationFrame(() => composerRef.current?.focusAtEnd());
+      applyTaskStarterSelection({
+        composerDraftTarget,
+        prompt,
+        setPrompt: setComposerDraftPrompt,
+        composerRef,
+      });
     },
     [composerDraftTarget, composerRef, setComposerDraftPrompt],
   );

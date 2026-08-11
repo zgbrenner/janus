@@ -367,7 +367,7 @@ function SnoozePopoverButton(props: {
         render={
           <button
             type="button"
-            aria-label="Snooze thread"
+            aria-label="Snooze task"
             onClick={(event) => event.stopPropagation()}
             onDoubleClick={(event) => event.stopPropagation()}
             className="inline-flex h-full cursor-pointer items-center gap-0.5 rounded-md bg-transparent px-1.5 text-xs text-muted-foreground hover:text-foreground"
@@ -1042,7 +1042,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
     <input
       autoFocus
       value={renamingTitle}
-      aria-label="Thread title"
+      aria-label="Task title"
       onChange={(event) => onRenameTitleChange(event.target.value)}
       onFocus={(event) => event.currentTarget.select()}
       onKeyDown={handleRenameKeyDown}
@@ -1201,7 +1201,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 !props.snoozeSupported ? null : (
                   <button
                     type="button"
-                    aria-label="Wake thread now"
+                    aria-label="Wake task now"
                     onClick={handleUnsnoozeClick}
                     className={cn(
                       "pointer-events-none absolute inset-y-0 right-0 inline-flex cursor-pointer items-center gap-1 rounded-md bg-transparent px-2 text-xs text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover/sidebar-row:pointer-events-auto group-hover/sidebar-row:opacity-100",
@@ -1214,7 +1214,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
               ) : !props.settlementSupported ? null : variantAction === "unsettle" ? (
                 <button
                   type="button"
-                  aria-label="Un-settle thread"
+                  aria-label="Un-settle task"
                   onClick={handleUnsettleClick}
                   className={cn(
                     "pointer-events-none absolute inset-y-0 right-0 -mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md bg-transparent px-1.5 text-xs text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover/sidebar-row:pointer-events-auto group-hover/sidebar-row:opacity-100",
@@ -1226,7 +1226,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
               ) : (
                 <button
                   type="button"
-                  aria-label="Settle thread"
+                  aria-label="Settle task"
                   onClick={handleSettleClick}
                   className={cn(
                     "pointer-events-none absolute inset-y-0 right-0 inline-flex cursor-pointer items-center gap-1 rounded-md bg-transparent px-2 text-xs text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover/sidebar-row:pointer-events-auto group-hover/sidebar-row:opacity-100",
@@ -1306,8 +1306,8 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                 props.pinningSupported ? (
                   <button
                     type="button"
-                    aria-label="Unpin thread"
-                    title="Unpin thread"
+                    aria-label="Unpin task"
+                    title="Unpin task"
                     onClick={handleUnpinClick}
                     className="inline-flex cursor-pointer items-center rounded-sm text-muted-foreground/65 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -1403,7 +1403,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: {
                     {props.settlementSupported ? (
                       <button
                         type="button"
-                        aria-label="Settle thread"
+                        aria-label="Settle task"
                         onClick={handleSettleClick}
                         className="-mr-1 inline-flex cursor-pointer items-center gap-1 rounded-md bg-transparent px-1.5 text-xs text-muted-foreground hover:text-foreground"
                       >
@@ -2263,7 +2263,7 @@ export default function Sidebar() {
         const trimmed = title.trim();
         setRenamingThreadKey(null);
         if (trimmed.length === 0) {
-          toastManager.add({ type: "warning", title: "Thread title cannot be empty" });
+          toastManager.add({ type: "warning", title: "Task title cannot be empty" });
           return;
         }
         if (trimmed === originalTitle) return;
@@ -2276,7 +2276,7 @@ export default function Sidebar() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to rename thread",
+              title: "Failed to rename task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2358,7 +2358,7 @@ export default function Sidebar() {
               toastManager.add(
                 stackedThreadToast({
                   type: "error",
-                  title: "Failed to settle thread",
+                  title: "Failed to settle task",
                   description: error instanceof Error ? error.message : "An error occurred.",
                 }),
               );
@@ -2386,7 +2386,7 @@ export default function Sidebar() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to un-settle thread",
+              title: "Failed to un-settle task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2404,7 +2404,7 @@ export default function Sidebar() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to wake thread",
+              title: "Failed to wake task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2497,7 +2497,7 @@ export default function Sidebar() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to pin thread",
+              title: "Failed to pin task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2515,7 +2515,7 @@ export default function Sidebar() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to unpin thread",
+              title: "Failed to unpin task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2580,7 +2580,7 @@ export default function Sidebar() {
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Failed to reorder pinned threads",
+                title: "Failed to reorder pinned tasks",
                 description: error instanceof Error ? error.message : "An error occurred.",
               }),
             );
@@ -2639,7 +2639,7 @@ export default function Sidebar() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to snooze thread",
+              title: "Failed to snooze task",
               description:
                 outcome.error instanceof Error ? outcome.error.message : "An error occurred.",
             }),
@@ -2759,11 +2759,11 @@ export default function Sidebar() {
                 type: failedCount > 0 ? "warning" : "success",
                 title:
                   failedCount > 0
-                    ? `Snoozed ${snoozedCount} of ${selectedThreads.length} threads`
-                    : `Snoozed ${snoozedCount} thread${snoozedCount === 1 ? "" : "s"}`,
+                    ? `Snoozed ${snoozedCount} of ${selectedThreads.length} tasks`
+                    : `Snoozed ${snoozedCount} task${snoozedCount === 1 ? "" : "s"}`,
                 description:
                   failedCount > 0
-                    ? `${failedCount} thread${failedCount === 1 ? "" : "s"} couldn't be snoozed.`
+                    ? `${failedCount} task${failedCount === 1 ? "" : "s"} couldn't be snoozed.`
                     : undefined,
                 timeout: 5_000,
                 actionProps: {
@@ -2779,7 +2779,7 @@ export default function Sidebar() {
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Failed to snooze threads",
+                title: "Failed to snooze tasks",
                 description:
                   firstError instanceof Error ? firstError.message : "An error occurred.",
               }),
@@ -2800,7 +2800,7 @@ export default function Sidebar() {
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Failed to regenerate thread titles",
+                title: "Failed to regenerate task titles",
                 description: error instanceof Error ? error.message : "An error occurred.",
               }),
             );
@@ -2838,8 +2838,8 @@ export default function Sidebar() {
         const confirmed = await settlePromise(() =>
           api.dialogs.confirm(
             [
-              `Delete ${count} thread${count === 1 ? "" : "s"}?`,
-              "This permanently clears conversation history for these threads.",
+              `Delete ${count} task${count === 1 ? "" : "s"}?`,
+              "This permanently clears conversation history for these tasks.",
             ].join("\n"),
             { variant: "destructive" },
           ),
@@ -2863,7 +2863,7 @@ export default function Sidebar() {
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Failed to delete threads",
+                title: "Failed to delete tasks",
                 description: error instanceof Error ? error.message : "An error occurred.",
               }),
             );
@@ -2972,7 +2972,7 @@ export default function Sidebar() {
               toastManager.add(
                 stackedThreadToast({
                   type: "error",
-                  title: "Could not create thread",
+                  title: "Could not create task",
                   description: error instanceof Error ? error.message : "An error occurred.",
                 }),
               );
@@ -3008,7 +3008,7 @@ export default function Sidebar() {
               toastManager.add(
                 stackedThreadToast({
                   type: "error",
-                  title: "Failed to regenerate thread title",
+                  title: "Failed to regenerate task title",
                   description: error instanceof Error ? error.message : "An error occurred.",
                 }),
               );
@@ -3024,7 +3024,7 @@ export default function Sidebar() {
                 stackedThreadToast({
                   type: "error",
                   title: "Path unavailable",
-                  description: "This thread does not have a workspace path to copy.",
+                  description: "This task does not have a workspace path to copy.",
                 }),
               );
               return;
@@ -3041,8 +3041,8 @@ export default function Sidebar() {
               const confirmed = await settlePromise(() =>
                 api.dialogs.confirm(
                   [
-                    `Delete thread "${thread.title}"?`,
-                    "This permanently clears conversation history for this thread.",
+                    `Delete task "${thread.title}"?`,
+                    "This permanently clears conversation history for this task.",
                   ].join("\n"),
                   { variant: "destructive" },
                 ),
@@ -3055,7 +3055,7 @@ export default function Sidebar() {
               toastManager.add(
                 stackedThreadToast({
                   type: "error",
-                  title: "Failed to delete thread",
+                  title: "Failed to delete task",
                   description: error instanceof Error ? error.message : "An error occurred.",
                 }),
               );
@@ -3233,7 +3233,7 @@ export default function Sidebar() {
                     size="icon-xs"
                     variant="ghost"
                     className="size-5 shrink-0 rounded-sm text-sidebar-muted-foreground hover:bg-sidebar-control-surface hover:text-sidebar-foreground"
-                    aria-label="Clear thread search"
+                    aria-label="Clear task search"
                     onClick={() => {
                       clearThreadSearch();
                       threadSearchInputRef.current?.focus();
@@ -3696,20 +3696,20 @@ export default function Sidebar() {
             <div className="flex flex-col items-center gap-2 px-2 py-6 text-center text-xs text-muted-foreground/60">
               {projects.length === 0 ? (
                 <>
-                  <span>No projects yet</span>
+                  <span>No workspaces yet</span>
                   <button
                     type="button"
                     onClick={openAddProjectCommandPalette}
                     className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border px-2.5 py-1 text-[11px] font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-row-hover hover:text-sidebar-foreground"
                   >
                     <PlusIcon className="-mx-0.5 size-3" />
-                    Add project
+                    Add workspace
                   </button>
                 </>
               ) : scopedProjectGroup ? (
-                `No threads in ${scopedProjectGroup.displayName} yet`
+                `No tasks in ${scopedProjectGroup.displayName} yet`
               ) : (
-                "No threads yet"
+                "No tasks yet"
               )}
             </div>
           ) : null}

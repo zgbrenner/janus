@@ -103,11 +103,11 @@ export function DraftHeroHeadline({
   const projectSelector = shouldShowProjectMenu ? (
     <Menu>
       <MenuTrigger
-        aria-label={hasResolvedProject ? "Change project" : "Choose a project"}
+        aria-label={hasResolvedProject ? "Change workspace" : "Choose a workspace"}
         className="pointer-events-auto inline-block max-w-64 truncate border-foreground/60 border-b border-dotted align-baseline text-foreground transition-colors hover:border-foreground/80 focus-visible:rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         title={activeProjectDisplayName ?? undefined}
       >
-        {activeProjectDisplayName ?? "Choose a project"}
+        {activeProjectDisplayName ?? "Choose a workspace"}
       </MenuTrigger>
       <MenuPopup align="center" className="max-h-80 min-w-40! w-max max-w-64 overflow-y-auto">
         <MenuRadioGroup
@@ -136,7 +136,7 @@ export function DraftHeroHeadline({
         <MenuSeparator />
         <MenuItem onClick={openAddProject}>
           <FolderPlusIcon />
-          New project
+          New workspace
         </MenuItem>
       </MenuPopup>
     </Menu>
@@ -146,7 +146,7 @@ export function DraftHeroHeadline({
       onClick={openAddProject}
       className="pointer-events-auto inline cursor-pointer border-muted-foreground/35 border-b border-dotted text-muted-foreground/60 transition-colors hover:border-muted-foreground/60 hover:text-muted-foreground/80 focus-visible:rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
     >
-      {activeProjectTitle ?? "Add a project"}
+      {activeProjectTitle ?? "Add a workspace"}
     </button>
   );
 

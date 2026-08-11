@@ -110,6 +110,8 @@ import {
   filterCommandPaletteGroups,
   getCommandPaletteInputPlaceholder,
   getCommandPaletteMode,
+  taskSearchTerms,
+  workspaceSearchTerms,
   ITEM_ICON_CLASS,
   RECENT_THREAD_LIMIT,
   reduceCommandPaletteUiState,
@@ -516,7 +518,7 @@ function CommandPaletteDialog(props: {
         props.mode === "files"
           ? "File picker"
           : props.mode === "content"
-            ? "Search project contents"
+            ? "Search workspace files"
             : "Quick actions"
       }
       className={cn("overflow-hidden p-0", props.mode === "content" && "h-105")}
@@ -947,8 +949,9 @@ function OpenCommandPaletteDialog(props: {
         valuePrefix: "project",
         searchTerms: (project) => {
           const group = projectGroupByTargetKey.get(`${project.environmentId}:${project.id}`);
-          return (
-            group?.memberProjects.flatMap((member) => [member.title, member.workspaceRoot]) ?? []
+          return workspaceSearchTerms(
+            ...(group?.memberProjects.flatMap((member) => [member.title, member.workspaceRoot]) ??
+              []),
           );
         },
         icon: projectFavicon,
@@ -965,8 +968,9 @@ function OpenCommandPaletteDialog(props: {
           valuePrefix: "new-thread-in",
           searchTerms: (project) => {
             const group = projectGroupByTargetKey.get(`${project.environmentId}:${project.id}`);
-            return (
-              group?.memberProjects.flatMap((member) => [member.title, member.workspaceRoot]) ?? []
+            return workspaceSearchTerms(
+              ...(group?.memberProjects.flatMap((member) => [member.title, member.workspaceRoot]) ??
+                []),
             );
           },
           icon: projectFavicon,
@@ -1304,7 +1308,7 @@ function OpenCommandPaletteDialog(props: {
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Unable to browse projects",
+          title: "Unable to browse workspaces",
           description: "No environment is available.",
         }),
       );
@@ -1352,7 +1356,7 @@ function OpenCommandPaletteDialog(props: {
       groups: [
         {
           value: "projects",
-          label: "Projects",
+          label: "Workspaces",
           items: enumerateCommandPaletteItems(prioritized),
         },
       ],
@@ -1378,7 +1382,7 @@ function OpenCommandPaletteDialog(props: {
       actionItems.push({
         kind: "action",
         value: "action:new-thread",
-        searchTerms: ["new thread", "chat", "create", "draft"],
+        searchTerms: taskSearchTerms("new thread", "thread", "chat", "create", "draft"),
         title: (
           <>
             New task in <span className="font-semibold">{activeProjectTitle}</span>
@@ -1400,7 +1404,9 @@ function OpenCommandPaletteDialog(props: {
     actionItems.push({
       kind: "submenu",
       value: "action:new-thread-in",
-      searchTerms: ["new thread", "project", "pick", "choose", "select"],
+      searchTerms: taskSearchTerms(
+        ...workspaceSearchTerms("new thread", "thread", "project", "pick", "choose", "select"),
+      ),
       title: "New task in...",
       icon: <SquarePenIcon className={ITEM_ICON_CLASS} />,
       addonIcon: <SquarePenIcon className={ADDON_ICON_CLASS} />,
@@ -1424,8 +1430,15 @@ function OpenCommandPaletteDialog(props: {
   actionItems.push({
     kind: "action",
     value: "action:search-project-contents",
-    searchTerms: ["search project", "find in files", "grep", "content search", "text search"],
-    title: "Search project contents",
+    searchTerms: workspaceSearchTerms(
+      "search workspace",
+      "search project",
+      "find in files",
+      "grep",
+      "content search",
+      "text search",
+    ),
+    title: "Search workspace files",
     icon: <TextSearchIcon className={ITEM_ICON_CLASS} />,
     keepOpen: true,
     shortcutCommand: "projectSearch.toggle",
@@ -1437,7 +1450,8 @@ function OpenCommandPaletteDialog(props: {
   actionItems.push({
     kind: "action",
     value: "action:add-project",
-    searchTerms: [
+    searchTerms: workspaceSearchTerms(
+      "add workspace",
       "add project",
       "folder",
       "directory",
@@ -1454,8 +1468,8 @@ function OpenCommandPaletteDialog(props: {
       "devops",
       "url",
       "environment",
-    ],
-    title: "Add project",
+    ),
+    title: "Add workspace",
     disabled: defaultAddProjectEnvironmentId === null,
     icon: <FolderPlusIcon className={ITEM_ICON_CLASS} />,
     keepOpen: true,
@@ -1468,8 +1482,16 @@ function OpenCommandPaletteDialog(props: {
     actionItems.push({
       kind: "action",
       value: "action:add-project:wsl-folder",
-      searchTerms: ["add project", "open", "wsl", "linux", "folder", "directory"],
-      title: "Open WSL folder",
+      searchTerms: workspaceSearchTerms(
+        "add workspace",
+        "add project",
+        "open",
+        "wsl",
+        "linux",
+        "folder",
+        "directory",
+      ),
+      title: "Open WSL workspace",
       description: wslAddProjectEnvironmentOption.label,
       icon: <FolderPlusIcon className={ITEM_ICON_CLASS} />,
       keepOpen: true,
@@ -1520,8 +1542,17 @@ function OpenCommandPaletteDialog(props: {
     actionItems.push({
       kind: "action",
       value: "action:project-settings",
-      searchTerms: ["project", "settings", "scripts", "model", "grouping", "checkout"],
-      title: "Project settings",
+      searchTerms: workspaceSearchTerms(
+        "workspace settings",
+        "project settings",
+        "project",
+        "settings",
+        "scripts",
+        "model",
+        "grouping",
+        "checkout",
+      ),
+      title: "Workspace settings",
       description: contextualProjectGroup.displayName,
       icon: <FolderIcon className={ITEM_ICON_CLASS} />,
       run: async () => {
@@ -1580,7 +1611,7 @@ function OpenCommandPaletteDialog(props: {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to add project",
+            title: "Failed to add workspace",
             description: "Windows-style paths are only supported on Windows.",
           }),
         );
@@ -1591,7 +1622,7 @@ function OpenCommandPaletteDialog(props: {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to add project",
+            title: "Failed to add workspace",
             description: "Relative paths require an active project.",
           }),
         );
@@ -1627,7 +1658,7 @@ function OpenCommandPaletteDialog(props: {
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Failed to open project",
+                title: "Failed to open workspace",
                 description: error instanceof Error ? error.message : "An error occurred.",
               }),
             );
@@ -1662,7 +1693,7 @@ function OpenCommandPaletteDialog(props: {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to add project",
+              title: "Failed to add workspace",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -1678,7 +1709,7 @@ function OpenCommandPaletteDialog(props: {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to add project",
+            title: "Failed to add workspace",
             description: error instanceof Error ? error.message : "An error occurred.",
           }),
         );
@@ -2164,7 +2195,7 @@ function OpenCommandPaletteDialog(props: {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Could not add WSL project",
+            title: "Could not add WSL workspace",
             description: "Start the matching WSL backend, then choose the folder again.",
           }),
         );
