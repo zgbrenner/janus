@@ -446,9 +446,11 @@ const resolveWslStartConfig = Effect.fn("desktop.backendConfiguration.resolveWsl
     mode: "desktop" as const,
     noBrowser: true,
     port: input.port,
-    // Omit t3Home so the Linux backend uses its own home dir instead of
-    // the Windows-side baseDir (which would be a /mnt/c path and share
-    // the SQLite file with the primary).
+    // Bootstrap a Linux-native Janus home. Omitting this lets the server
+    // fall back to ~/.t3; forwarding the Windows-side baseDir instead would
+    // turn into a /mnt/c path and share the SQLite file with the primary.
+    // Keep explicit Windows T3CODE_HOME primary-only for the same reason.
+    t3Home: "~/.janus",
     host: wslBindHost,
     desktopBootstrapToken: input.bootstrapToken,
     // PortSchema rejects 0, so when tailscale serve is disabled we still

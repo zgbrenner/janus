@@ -57,6 +57,7 @@ function makeEnvironmentLayer(
     readonly devServerUrl?: string;
     readonly platform?: NodeJS.Platform;
     readonly resourcesPath?: string;
+    readonly t3Home?: string;
     readonly useImplicitJanusState?: boolean;
   },
 ) {
@@ -75,7 +76,7 @@ function makeEnvironmentLayer(
       Layer.mergeAll(
         NodeServices.layer,
         DesktopConfig.layerTest({
-          ...(options?.useImplicitJanusState ? {} : { T3CODE_HOME: baseDir }),
+          ...(options?.useImplicitJanusState ? {} : { T3CODE_HOME: options?.t3Home ?? baseDir }),
           T3CODE_PORT: "9999",
           T3CODE_MODE: "desktop",
           T3CODE_DESKTOP_LAN_HOST: "192.168.1.50",
@@ -190,6 +191,56 @@ describe("DesktopBackendConfiguration", () => {
 
         assert.equal(wsl.bootstrap.desktopBootstrapToken, primary.bootstrap.desktopBootstrapToken);
       }),
+    ),
+  );
+
+  it.effect("resolveWsl defaults Linux state to ~/.janus instead of ~/.t3", () =>
+    Effect.gen(function* () {
+      const configuration = yield* DesktopBackendConfiguration.DesktopBackendConfiguration;
+      const wsl = yield* configuration.resolveWsl({ port: 5000, distro: null });
+
+      assert.equal(wsl.bootstrap.t3Home, "~/.janus");
+      assert.notEqual(wsl.bootstrap.t3Home, "~/.t3");
+      assert.isUndefined(wsl.env.T3CODE_HOME);
+    }).pipe(
+      Effect.provide(
+        DesktopBackendConfiguration.layer.pipe(
+          Layer.provideMerge(serverExposureLayer),
+          Layer.provideMerge(DesktopAppSettings.layerTest()),
+          Layer.provideMerge(DesktopWslEnvironment.layerTest()),
+          Layer.provideMerge(
+            makeEnvironmentLayer("/tmp/janus-windows-home", { useImplicitJanusState: true }),
+          ),
+          Layer.provideMerge(NodeServices.layer),
+        ),
+      ),
+      Effect.scoped,
+    ),
+  );
+
+  it.effect("resolveWsl keeps a Windows-form explicit T3CODE_HOME primary-only", () =>
+    Effect.gen(function* () {
+      const configuration = yield* DesktopBackendConfiguration.DesktopBackendConfiguration;
+      const wsl = yield* configuration.resolveWsl({ port: 5000, distro: null });
+
+      assert.equal(wsl.bootstrap.t3Home, "~/.janus");
+      assert.notEqual(wsl.bootstrap.t3Home, "C:\\Users\\alice\\.t3-compatible-home");
+      assert.isUndefined(wsl.env.T3CODE_HOME);
+    }).pipe(
+      Effect.provide(
+        DesktopBackendConfiguration.layer.pipe(
+          Layer.provideMerge(serverExposureLayer),
+          Layer.provideMerge(DesktopAppSettings.layerTest()),
+          Layer.provideMerge(DesktopWslEnvironment.layerTest()),
+          Layer.provideMerge(
+            makeEnvironmentLayer("/tmp/janus-windows-home", {
+              t3Home: "C:\\Users\\alice\\.t3-compatible-home",
+            }),
+          ),
+          Layer.provideMerge(NodeServices.layer),
+        ),
+      ),
+      Effect.scoped,
     ),
   );
 
