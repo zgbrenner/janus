@@ -1,23 +1,20 @@
-# T3 Code docs
+# Janus docs
 
-## Using T3 Code
+## Using Janus
 
-- [Install and first run](./user/install.md)
+- [Install Janus](./user/install.md)
 - [Permission modes](./user/permission-modes.md)
 - [Keyboard shortcuts](./user/keybindings.md)
-- [Organizing threads](./user/thread-sidebar.md)
-- [Customize a project icon](./user/project-settings.md)
+- [Organizing tasks](./user/thread-sidebar.md)
+- [Customize a workspace icon](./user/project-settings.md)
 - [Remote access](./user/remote-access.md)
-- [Keeping app and server in sync](./user/updating.md)
+- [Keeping Janus up to date](./user/updating.md)
 - [Source control integrations](./user/source-control.md)
-- [Background service (Linux)](./user/background-service.md)
 - Providers: [Codex](./user/providers-codex.md) · [Claude](./user/providers-claude.md)
-
-Mobile app: [apps/mobile/README.md](../apps/mobile/README.md)
 
 ---
 
-## Working on T3 Code
+## Working on Janus
 
 Everything below is for maintainers. Setup lives in the [root README](../README.md);
 policy in [CONTRIBUTING.md](../CONTRIBUTING.md); agent rules in [AGENTS.md](../AGENTS.md).
