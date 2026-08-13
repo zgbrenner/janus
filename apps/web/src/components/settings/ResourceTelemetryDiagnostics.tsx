@@ -37,6 +37,7 @@ import {
   useResourceTelemetry,
   useResourceTelemetryHistory,
 } from "../../lib/resourceTelemetryState";
+import { APP_BASE_NAME } from "~/branding";
 import { cn } from "../../lib/utils";
 import { ensureLocalApi } from "../../localApi";
 import { usePrimaryEnvironment } from "../../state/environments";
@@ -136,7 +137,7 @@ function categoryLabel(category: ResourceTelemetryProcessCategory): string {
     case "resource-monitor":
       return "Monitor";
     case "unknown-t3":
-      return "T3 process";
+      return `${APP_BASE_NAME} process`;
   }
 }
 

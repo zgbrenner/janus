@@ -2,9 +2,9 @@
 
 A permission mode controls how much the agent does on its own and when it stops to ask you.
 
-The mode is set per thread, from the mode control in the message composer. Changing it in one
-thread does not change any other thread. A thread created from inside another thread keeps that
-thread's mode; otherwise new threads start in **Full access** unless you pick something else
+The mode is set per task, from the mode control in the message composer. Changing it in one
+task does not change any other task. A task created from inside another task keeps that
+task's mode; otherwise new tasks start in **Full access** unless you pick something else
 before sending.
 
 ## The Modes
@@ -43,6 +43,3 @@ translates the mode into its approval policy and sandbox level, so **Supervised*
 with prompting enabled and a restricted workspace while **Full access** disables both. The
 labels above describe what you get; the exact per-provider translation is internal and may
 change.
-
-Mobile offers the same four modes. It labels the first one **Approve actions** rather than
-**Supervised**.

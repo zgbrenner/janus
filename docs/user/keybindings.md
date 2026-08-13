@@ -4,7 +4,7 @@ Edit keybindings from **Settings** → **Keybindings**. That page lists every co
 shortcut, whether it is a default or your own, and warns about conflicts.
 
 The same configuration lives in `~/.t3/userdata/keybindings.json` on the machine running the
-server, if you prefer editing it directly. T3 Code writes the built-in defaults into that file on
+server, if you prefer editing it directly. Janus writes the built-in defaults into that file on
 first run, and adds any new defaults on later startups unless a rule of yours already claims the
 command or the shortcut.
 
@@ -35,10 +35,10 @@ Examples: `mod+j`, `mod+shift+d`, `ctrl+l`, `cmd+k`.
 ## Commands
 
 Commands are IDs like `terminal.toggle`, `commandPalette.toggle`, `preview.refresh`, and
-`chat.new`. Project scripts are addressable as `script.{id}.run`, for example `script.test.run`.
+`chat.new`. Workspace scripts are addressable as `script.{id}.run`, for example `script.test.run`.
 
-`filePicker.toggle` opens file search for the active project and defaults to `mod+p`.
-`projectSearch.toggle` searches inside the active project's files and defaults to `mod+shift+f`.
+`filePicker.toggle` opens file search for the active workspace and defaults to `mod+p`.
+`projectSearch.toggle` searches inside the active workspace's files and defaults to `mod+shift+f`.
 Repeating either shortcut closes that search, and switching shortcuts replaces the open search.
 `themeEditor.toggle` opens or closes the floating theme editor and defaults to
 `mod+alt+shift+t`. Select a color label to spotlight the elements that use it; select the label
@@ -47,20 +47,20 @@ Use **Inspect** to pick an element in the app and reveal its color token. Inspec
 successful pick; its hover glow and badge preview the element and token that click will select.
 **Cancel** or `Escape` exits Inspect and clears its selection and spotlight.
 
-The command palette searches active thread titles, projects, branches, user messages, and final
+The command palette searches active task titles, workspaces, branches, user messages, and final
 agent responses across connected environments. Message matches show one labeled excerpt while
-keeping the thread's project, branch, and machine context visible. Message search begins after two
+keeping the task's workspace, branch, and machine context visible. Message search begins after two
 characters and uses SQLite's ASCII case-insensitive matching.
 
 The full command list and the current defaults are shown in **Settings** → **Keybindings**, which
 always matches the build you are running. Use that rather than a copied list.
 
-Note that `chat.new` and `chat.newLocal` both create a thread through the same path. A new thread
-inherits the project you were in, along with model and mode selections. Branch, worktree, and
-environment mode always come from your configured defaults, not from the thread you were looking
-at. To keep a worktree, use the explicit "new thread in this worktree" action in the branch
+Note that `chat.new` and `chat.newLocal` both create a task through the same path. A new task
+inherits the workspace you were in, along with model and mode selections. Branch, worktree, and
+environment mode always come from your configured defaults, not from the task you were looking
+at. To keep a worktree, use the explicit new-task-in-this-worktree action in the branch
 toolbar. The only difference between the two commands: with the current sidebar and more than one
-project, `chat.new` opens a project chooser first.
+workspace, `chat.new` opens a workspace chooser first.
 
 ## `when` Conditions
 

@@ -1,12 +1,12 @@
 # Codex
 
-This guide is for people who want to use more than one Codex account in T3 Code. For Claude, see
-[Claude](./providers-claude.md). For first-time setup, see [Install T3 Code](./install.md).
+This guide is for people who want to use more than one Codex account in Janus. For Claude, see
+[Claude](./providers-claude.md). For first-time setup, see [Install Janus](./install.md).
 
 Common reasons:
 
-- use a work account for work projects
-- use a personal account for personal projects
+- use a work account for work workspaces
+- use a personal account for personal workspaces
 - switch to another account when one account hits limits
 - keep one shared Codex history instead of maintaining two separate Codex setups
 
@@ -41,9 +41,9 @@ Recommended setup:
 
 The idea is:
 
-- both accounts can see the same T3/Codex sessions
+- both accounts can see the same Codex sessions in Janus
 - each account keeps its own login
-- existing threads can continue with either account
+- existing tasks can continue with either account
 
 ### Set Up The First Account
 
@@ -55,7 +55,7 @@ codex login
 
 This is the account used by `~/.codex`.
 
-In T3 Code Settings, name it something obvious:
+In Janus Settings, name it something obvious:
 
 ```text
 Display name: Codex Work
@@ -72,7 +72,7 @@ mkdir -p ~/.codex_p
 CODEX_HOME=~/.codex_p codex login
 ```
 
-In T3 Code Settings, add another Codex provider:
+In Janus Settings, add another Codex provider:
 
 ```text
 Display name: Codex Personal
@@ -87,7 +87,7 @@ has a `Shadow home path`.
 
 Open Settings and look at the provider row.
 
-T3 Code shows the authenticated email for providers that report one. Emails are blurred by default;
+Janus shows the authenticated email for providers that report one. Emails are blurred by default;
 click the blurred email to reveal it.
 
 Use display names and accent colors to make accounts easy to tell apart in the model picker.
@@ -100,7 +100,7 @@ This is useful when a Codex-compatible setup needs account-specific variables. A
 the provider instance that should receive them, and mark API keys or tokens as sensitive. Sensitive
 values are stored as server secrets and are not sent back to the app after saving.
 
-## Can I Switch Accounts In An Existing Thread?
+## Can I Switch Accounts In An Existing Task?
 
 Yes, when both Codex providers share the same `CODEX_HOME path`.
 
@@ -114,8 +114,8 @@ Codex Personal  CODEX_HOME path: ~/.codex, Shadow home path: ~/.codex_p
 Those two providers are considered compatible for continuation, so the locked model picker can show
 both.
 
-If you add a third Codex provider with a completely different `CODEX_HOME path`, T3 Code treats it
-as a different workspace. It will not be offered for existing threads created under `~/.codex`.
+If you add a third Codex provider with a completely different `CODEX_HOME path`, Janus treats it
+as a separate Codex environment. It will not be offered for existing tasks created under `~/.codex`.
 
 ## If Both Accounts Look The Same
 
@@ -137,5 +137,5 @@ find ~/.codex_p -mindepth 1 ! -name auth.json -exec rm -rf {} +
 
 Use a totally separate `CODEX_HOME path` only when you want a separate Codex workspace.
 
-That means separate sessions and less account switching inside old threads. Most dual-account users
+That means separate sessions and less account switching inside old tasks. Most dual-account users
 should use the shared-home plus shadow-home setup instead.

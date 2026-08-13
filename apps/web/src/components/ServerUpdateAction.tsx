@@ -8,7 +8,7 @@ import {
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { serverEnvironment } from "~/state/server";
 import { useAtomCommand } from "~/state/use-atom-command";
-import { manualServerUpdateCommand } from "~/versionSkew";
+import { manualServerUpdateUrl } from "~/versionSkew";
 import { Button } from "./ui/button";
 import { toastManager } from "./ui/toast";
 
@@ -83,19 +83,19 @@ export function ServerUpdateAction({
   const updateServer = useAtomCommand(serverEnvironment.updateServer, {
     reportFailure: false,
   });
-  const { copyToClipboard } = useCopyToClipboard<{ command: string }>({
-    target: "update command",
-    onCopy: ({ command }) => {
+  const { copyToClipboard } = useCopyToClipboard<{ url: string }>({
+    target: "download link",
+    onCopy: () => {
       toastManager.add({
         type: "success",
-        title: "Update command copied",
-        description: `Run \`${command}\` on ${serverLabel} to update it.`,
+        title: "Download link copied",
+        description: `Install the release from the copied link on ${serverLabel} to update it.`,
       });
     },
     onError: (error) => {
       toastManager.add({
         type: "error",
-        title: "Could not copy update command",
+        title: "Could not copy download link",
         description: error.message,
       });
     },
@@ -125,7 +125,7 @@ export function ServerUpdateAction({
       toastManager.add({
         type: "success",
         title: `${serverLabel} updated`,
-        description: `Reconnected on t3@${result.value.targetVersion}.`,
+        description: `Reconnected on version ${result.value.targetVersion}.`,
       });
     } finally {
       pendingUpdateEnvironmentIds.delete(environmentId);
@@ -141,10 +141,10 @@ export function ServerUpdateAction({
   }
 
   if (selfUpdate === null) {
-    const command = manualServerUpdateCommand(targetVersion);
+    const url = manualServerUpdateUrl(targetVersion);
     return (
-      <Button size="xs" variant="outline" onClick={() => copyToClipboard(command, { command })}>
-        Copy update command
+      <Button size="xs" variant="outline" onClick={() => copyToClipboard(url, { url })}>
+        Copy download link
       </Button>
     );
   }
