@@ -3,6 +3,7 @@
 ## Using Janus
 
 - [Install Janus](./user/install.md)
+- [Your first task](./user/first-task.md)
 - [Permission modes](./user/permission-modes.md)
 - [Keyboard shortcuts](./user/keybindings.md)
 - [Organizing tasks](./user/thread-sidebar.md)
