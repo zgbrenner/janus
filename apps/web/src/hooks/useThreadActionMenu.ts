@@ -143,7 +143,7 @@ export function useThreadActionMenu(input: {
           const result = await snoozeThread(threadRef, preset.snoozedUntil);
           if (result._tag === "Failure") {
             if (!isAtomCommandInterrupted(result)) {
-              failureToast("Failed to snooze thread", squashAtomCommandFailure(result));
+              failureToast("Failed to snooze task", squashAtomCommandFailure(result));
             }
             return;
           }
@@ -157,7 +157,7 @@ export function useThreadActionMenu(input: {
                 onClick: () => {
                   void unsnoozeThread(threadRef).then((undone) => {
                     if (undone._tag === "Failure" && !isAtomCommandInterrupted(undone)) {
-                      failureToast("Failed to wake thread", squashAtomCommandFailure(undone));
+                      failureToast("Failed to wake task", squashAtomCommandFailure(undone));
                     }
                   });
                 },
@@ -188,7 +188,7 @@ export function useThreadActionMenu(input: {
               }),
             );
             if (result._tag === "Failure") {
-              failureToast("Could not create thread", squashAtomCommandFailure(result));
+              failureToast("Could not create task", squashAtomCommandFailure(result));
             }
             return;
           }
@@ -199,7 +199,7 @@ export function useThreadActionMenu(input: {
             await reportFailure("Failed to un-settle thread", () => unsettleThread(threadRef));
             return;
           case "unsnooze":
-            await reportFailure("Failed to wake thread", () => unsnoozeThread(threadRef));
+            await reportFailure("Failed to wake task", () => unsnoozeThread(threadRef));
             return;
           case "pin":
             await reportFailure("Failed to pin thread", () => pinThread(threadRef));
@@ -212,7 +212,7 @@ export function useThreadActionMenu(input: {
             return;
           case "regenerate-title":
             if (isRegeneratingTitle) return;
-            await reportFailure("Failed to regenerate thread title", () =>
+            await reportFailure("Failed to regenerate task title", () =>
               updateThreadMetadata({
                 environmentId: threadRef.environmentId,
                 input: { threadId: threadRef.threadId, regenerateTitle: true },
@@ -229,7 +229,7 @@ export function useThreadActionMenu(input: {
                 stackedThreadToast({
                   type: "error",
                   title: "Path unavailable",
-                  description: "This thread does not have a workspace path to copy.",
+                  description: "This task does not have a workspace path to copy.",
                 }),
               );
               return;
@@ -247,8 +247,8 @@ export function useThreadActionMenu(input: {
               const confirmed = await settlePromise(() =>
                 api.dialogs.confirm(
                   [
-                    `Delete thread "${thread.title}"?`,
-                    "This permanently clears conversation history for this thread.",
+                    `Delete task "${thread.title}"?`,
+                    "This permanently clears conversation history for this task.",
                   ].join("\n"),
                   { variant: "destructive" },
                 ),
@@ -261,10 +261,10 @@ export function useThreadActionMenu(input: {
               !isAtomCommandInterrupted(deleted) &&
               // A failure with the thread already gone is worktree cleanup
               // failing after a successful delete — deleteThread has toasted
-              // that itself, and "Failed to delete thread" would be a lie.
+              // that itself, and "Failed to delete task" would be a lie.
               readThreadShell(threadRef) !== null
             ) {
-              failureToast("Failed to delete thread", squashAtomCommandFailure(deleted));
+              failureToast("Failed to delete task", squashAtomCommandFailure(deleted));
             }
             return;
           }

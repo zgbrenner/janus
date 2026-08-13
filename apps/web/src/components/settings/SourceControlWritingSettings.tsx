@@ -26,7 +26,8 @@ const MODE_OPTIONS: Record<SourceControlWritingStyleMode, { label: string; descr
   {
     repo_conventions: {
       label: "Repository conventions",
-      description: "In each project, matches recent change descriptions and change request titles.",
+      description:
+        "In each workspace, matches recent change descriptions and change request titles.",
     },
     conventional_commits: {
       label: "Conventional Commits",
@@ -36,7 +37,7 @@ const MODE_OPTIONS: Record<SourceControlWritingStyleMode, { label: string; descr
     custom: {
       label: "Custom instructions",
       description:
-        "Applies your instructions to change descriptions and change request titles and descriptions in every project.",
+        "Applies your instructions to change descriptions and change request titles and descriptions in every workspace.",
     },
   };
 

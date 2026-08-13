@@ -612,7 +612,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               ? {
                   disabledInstanceIds: lockedDisabledInstanceIds,
                   getDisabledInstanceTooltip: (entry: ProviderInstanceEntry) =>
-                    `${entry.displayName} is unavailable in this thread. Start a new thread to switch providers.`,
+                    `${entry.displayName} is unavailable in this task. Start a new task to switch providers.`,
                 }
               : {})}
           />

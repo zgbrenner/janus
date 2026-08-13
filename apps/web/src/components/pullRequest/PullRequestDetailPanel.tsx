@@ -448,14 +448,14 @@ export function PullRequestDetailPanel({
     if (opened === null) {
       toastManager.add({
         type: "error",
-        title: "Could not open a thread",
-        description: "Try again from the project, or open a thread first.",
+        title: "Could not open a task",
+        description: "Try again from the workspace, or open a task first.",
       });
       return;
     }
     toastManager.add({
       type: "success",
-      title: "Asked in a thread",
+      title: "Asked in a task",
       // "Ask" leaves the composer empty on purpose, so saying the question is in it would send
       // the reader looking for something that is not there. The chips are what landed.
       description:
@@ -500,8 +500,8 @@ export function PullRequestDetailPanel({
       // working tree than to prepare a worktree nobody asked for.
       toastManager.update(toastId, {
         type: "error",
-        title: "Could not open a thread for the checkout",
-        description: "Try again from the project, or open a thread first.",
+        title: "Could not open a task for the checkout",
+        description: "Try again from the workspace, or open a task first.",
       });
       return;
     }
@@ -540,8 +540,8 @@ export function PullRequestDetailPanel({
       // outcome worth stopping for, since it reads as success and is not.
       toastManager.update(toastId, {
         type: "error",
-        title: "Checked out, but the thread stayed where it was",
-        description: `The checkout is ready on \`${prepared.value.branch}\`. Point a thread at it from the branch picker, then ask again.`,
+        title: "Checked out, but the task stayed where it was",
+        description: `The checkout is ready on \`${prepared.value.branch}\`. Point a task at it from the branch picker, then ask again.`,
       });
       return;
     }
@@ -566,8 +566,8 @@ export function PullRequestDetailPanel({
               title: mode === "local" ? "Checked out here" : "Checked out",
               description:
                 mode === "local"
-                  ? "This repository is on the pull request's branch, with a thread open on it."
-                  : "The pull request is in its own worktree, with a thread open on it.",
+                  ? "This repository is on the pull request's branch, with a task open on it."
+                  : "The pull request is in its own worktree, with a task open on it.",
             }
           : staleCheckoutToast,
       );
@@ -847,7 +847,7 @@ export function PullRequestDetailPanel({
                   </MenuItem>
                   <MenuItem disabled={handoff !== null} onClick={startFixFindings}>
                     <HammerIcon className="size-3.5" />
-                    {handoff === "findings" ? "Preparing..." : "Fix findings in a thread"}
+                    {handoff === "findings" ? "Preparing..." : "Fix findings in a task"}
                   </MenuItem>
                   <MenuSeparator />
                   {detail.state === "open" ? (
@@ -914,7 +914,7 @@ export function PullRequestDetailPanel({
                   {conflicting && primaryAction !== "resolve" ? (
                     <MenuItem disabled={handoff !== null} onClick={startResolveConflicts}>
                       <GitMergeIcon className="size-3.5" />
-                      {handoff === "conflicts" ? "Preparing..." : "Resolve conflicts in a thread"}
+                      {handoff === "conflicts" ? "Preparing..." : "Resolve conflicts in a task"}
                     </MenuItem>
                   ) : null}
                   {detail.state === "open" && can("close") ? (
@@ -1170,7 +1170,7 @@ export function PullRequestDetailPanel({
                   disabled={handoff !== null}
                   onClick={startResolveConflicts}
                 >
-                  {handoff === "conflicts" ? "Preparing..." : "Resolve in a new thread"}
+                  {handoff === "conflicts" ? "Preparing..." : "Resolve in a new task"}
                   <ArrowUpRightIcon className="size-3.5 text-destructive" />
                 </Button>
               </div>

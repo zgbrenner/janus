@@ -227,7 +227,7 @@ function ProjectSettingsBreadcrumb({ projectKey }: { projectKey: string }) {
   };
 
   return (
-    <WorkspaceBreadcrumb ariaLabel="Project settings breadcrumb">
+    <WorkspaceBreadcrumb ariaLabel="Workspace settings breadcrumb">
       <WorkspaceBreadcrumbItem>Projects</WorkspaceBreadcrumbItem>
       <WorkspaceBreadcrumbSeparator />
       <WorkspaceBreadcrumbItem current>
@@ -235,7 +235,7 @@ function ProjectSettingsBreadcrumb({ projectKey }: { projectKey: string }) {
           <button
             type="button"
             aria-haspopup="menu"
-            aria-label="Switch project"
+            aria-label="Switch workspace"
             onClick={openProjectMenu}
             className="group/project-title inline-flex min-w-0 max-w-64 cursor-pointer items-center gap-1 rounded-sm text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
@@ -246,7 +246,7 @@ function ProjectSettingsBreadcrumb({ projectKey }: { projectKey: string }) {
             />
           </button>
         ) : (
-          <span className="truncate text-muted-foreground">Unavailable project</span>
+          <span className="truncate text-muted-foreground">Unavailable workspace</span>
         )}
       </WorkspaceBreadcrumbItem>
     </WorkspaceBreadcrumb>
@@ -293,8 +293,8 @@ export function ProjectSettingsPanel({ projectKey }: { projectKey: string }) {
     return (
       <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
         {groups.length === 0
-          ? "Add a project from the sidebar to configure it here."
-          : "This project is no longer available."}
+          ? "Add a workspace from the sidebar to configure it here."
+          : "This workspace is no longer available."}
       </div>
     );
   }
@@ -398,12 +398,12 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
     async (nextTitle: string) => {
       const title = nextTitle.trim();
       if (!title) {
-        toastManager.add({ type: "warning", title: "Project title cannot be empty" });
+        toastManager.add({ type: "warning", title: "Workspace title cannot be empty" });
         return;
       }
       if (title === group.displayName) return;
       if (group.memberProjects.every((member) => member.title === title)) return;
-      await updateAllMembers({ title }, "Failed to rename project");
+      await updateAllMembers({ title }, "Failed to rename workspace");
     },
     [group.displayName, group.memberProjects, updateAllMembers],
   );
@@ -435,10 +435,7 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
   const storedEnvMode = representative.defaultThreadEnvMode ?? null;
   const setDefaultThreadEnvMode = useCallback(
     (mode: ThreadEnvMode | null) =>
-      void updateAllMembers(
-        { defaultThreadEnvMode: mode },
-        "Failed to update new-thread workspace",
-      ),
+      void updateAllMembers({ defaultThreadEnvMode: mode }, "Failed to update new-task workspace"),
     [updateAllMembers],
   );
 
@@ -452,7 +449,7 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
       savingFaviconRef.current = true;
       setIsSavingFavicon(true);
       try {
-        await updateAllMembers({ faviconPath }, "Failed to update project icon");
+        await updateAllMembers({ faviconPath }, "Failed to update workspace icon");
       } finally {
         savingFaviconRef.current = false;
         setIsSavingFavicon(false);
@@ -682,8 +679,8 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
         api.dialogs.confirm(
           [
             projectThreads.length > 0
-              ? `Remove project "${targetLabel}" and delete its ${projectThreads.length} thread${projectThreads.length === 1 ? "" : "s"}?`
-              : `Remove project "${targetLabel}"?`,
+              ? `Remove workspace "${targetLabel}" and delete its ${projectThreads.length} thread${projectThreads.length === 1 ? "" : "s"}?`
+              : `Remove workspace "${targetLabel}"?`,
             ...(singleMember
               ? [
                   `Path: ${singleMember.workspaceRoot}`,
@@ -691,13 +688,13 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
                     ? [`Environment: ${singleMember.environmentLabel}`]
                     : []),
                 ]
-              : [`This removes ${members.length} grouped project entries.`]),
+              : [`This removes ${members.length} grouped workspace entries.`]),
             ...(projectThreads.length > 0
-              ? ["This permanently clears conversation history for those threads."]
+              ? ["This permanently clears conversation history for those tasks."]
               : []),
             isWholeGroup
-              ? "This removes only the project entries, not the files on disk."
-              : "Other entries in this grouped project are unaffected.",
+              ? "This removes only the workspace entries, not the files on disk."
+              : "Other entries in this grouped workspace are unaffected.",
             "This action cannot be undone.",
           ].join("\n"),
           { variant: "destructive" },
@@ -759,15 +756,15 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
   return (
     <>
       <SettingsPageContainer>
-        <SettingsSection title="Project">
+        <SettingsSection title="Workspace">
           <SettingsRow
             title="Name"
-            description="The shared name for this project group in the sidebar and thread lists."
+            description="The shared name for this workspace group in the sidebar and task lists."
             control={
               <Input
                 key={`${group.projectKey}:${group.displayName}`}
                 className="w-full sm:w-64"
-                aria-label="Project name"
+                aria-label="Workspace name"
                 defaultValue={group.displayName}
                 onBlur={(event) => {
                   void renameGroup(event.currentTarget.value);
@@ -779,12 +776,12 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
             }
           />
           <SettingsRow
-            title="Project icon"
+            title="Workspace icon"
             description={faviconPath ?? "Automatic"}
             resetAction={
               faviconPath !== null ? (
                 <SettingResetButton
-                  label="project icon"
+                  label="workspace icon"
                   disabled={isSavingFavicon}
                   onClick={() => void setFaviconPath(null)}
                 />
@@ -802,7 +799,7 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
                   size="xs"
                   variant="outline"
                   type="button"
-                  aria-label="Choose a project icon file"
+                  aria-label="Choose a workspace icon file"
                   disabled={isSavingFavicon}
                   onClick={() => setFaviconPickerOpen(true)}
                 >
@@ -813,14 +810,14 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
           />
         </SettingsSection>
 
-        <SettingsSection title="New threads">
+        <SettingsSection title="New tasks">
           <SettingsRow
             title="Model"
-            description="New threads in this project start with this model. Applies to every checkout in this group."
+            description="New tasks in this workspace start with this model. Applies to every checkout in this group."
             resetAction={
               storedSelection !== null ? (
                 <SettingResetButton
-                  label="project default model"
+                  label="workspace default model"
                   onClick={() => setDefaultModel(null)}
                 />
               ) : null
@@ -868,11 +865,11 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
           />
           <SettingsRow
             title="Workspace"
-            description="Where new threads in this project start. Overrides t3.json and the global default; applies to every checkout in this group."
+            description="Where new tasks start. Overrides t3.json and the global default; applies to every checkout in this group."
             resetAction={
               storedEnvMode !== null ? (
                 <SettingResetButton
-                  label="project workspace default"
+                  label="new-task workspace"
                   onClick={() => setDefaultThreadEnvMode(null)}
                 />
               ) : null
@@ -888,7 +885,7 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
                   }
                 }}
               >
-                <SelectTrigger aria-label="New-thread workspace">
+                <SelectTrigger aria-label="New-task workspace">
                   <SelectValue>
                     {storedEnvMode === null
                       ? group.memberProjects.length > 1
@@ -955,14 +952,14 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
               </button>
               <div className="shrink-0 border-l border-border/60 px-2 tabular-nums">
                 {selectedCheckoutThreadCount === 1
-                  ? "1 thread"
+                  ? "1 task"
                   : `${selectedCheckoutThreadCount} threads`}
               </div>
             </div>
           </div>
           <SettingsRow
-            title="Project grouping"
-            description="How this checkout joins project groups in the sidebar. Changing it can move you to a different project group."
+            title="Workspace grouping"
+            description="How this checkout joins workspace groups in the sidebar. Changing it can move you to a different workspace group."
             control={
               <Select
                 value={selectedCheckoutGrouping}
@@ -1004,7 +1001,7 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
           {group.memberProjects.length > 1 ? (
             <SettingsRow
               title="Remove checkout"
-              description="Removes this checkout and its threads from the project group. Files on disk are not touched."
+              description="Removes this checkout and its tasks from the workspace group. Files on disk are not touched."
               control={
                 <Button
                   size="xs"
@@ -1144,12 +1141,14 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
         <SettingsSection title="Danger">
           <SettingsRow
             title={
-              group.memberProjects.length > 1 ? "Remove this project everywhere" : "Remove project"
+              group.memberProjects.length > 1
+                ? "Remove this workspace everywhere"
+                : "Remove workspace"
             }
             description={
               group.memberProjects.length > 1
-                ? `Deletes all ${group.memberProjects.length} checkout entries and their threads on every machine. Files on disk are not touched.`
-                : "Deletes the project entry and its threads. Files on disk are not touched."
+                ? `Deletes all ${group.memberProjects.length} checkout entries and their tasks on every machine. Files on disk are not touched.`
+                : "Deletes the workspace entry and its tasks. Files on disk are not touched."
             }
             control={
               <Button
@@ -1157,7 +1156,7 @@ function ProjectDetail({ group }: { group: SidebarProjectSnapshot }) {
                 onClick={() => void removeMembers(group.memberProjects)}
               >
                 <Trash2Icon />
-                {group.memberProjects.length > 1 ? "Remove all entries" : "Remove project"}
+                {group.memberProjects.length > 1 ? "Remove all entries" : "Remove workspace"}
               </Button>
             }
           />

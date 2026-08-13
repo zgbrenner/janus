@@ -238,7 +238,7 @@ export function PullRequestFiltersMenu({
             if (nextProjectId !== projectId) onProject(nextProjectId);
           }}
         >
-          <MenuGroupLabel>Project</MenuGroupLabel>
+          <MenuGroupLabel>Workspace</MenuGroupLabel>
           <MenuRadioItem value={ALL_PROJECTS_VALUE}>
             <span className="flex min-w-0 items-center gap-2">
               <LayersIcon aria-hidden className="size-3.5" />

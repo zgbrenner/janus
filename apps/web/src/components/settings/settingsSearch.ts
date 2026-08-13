@@ -95,7 +95,7 @@ export const SETTINGS_SEARCH_ITEMS = [
   },
   {
     id: "project-grouping",
-    title: "Project grouping",
+    title: "Workspace grouping",
     to: "/settings/general",
   },
   {
@@ -131,7 +131,7 @@ export const SETTINGS_SEARCH_ITEMS = [
   },
   {
     id: "add-project-starts-in",
-    title: "Add project starts in",
+    title: "Add workspace starts in",
     to: "/settings/general",
   },
   {

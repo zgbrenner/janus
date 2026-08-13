@@ -424,7 +424,7 @@ export function PullRequestSummaryTab({
                             <HammerIcon className="size-3" />
                             {pendingFinding === pullRequestFindingKey(finding)
                               ? "Preparing..."
-                              : "Fix in a thread"}
+                              : "Fix in a task"}
                           </Button>
                         ) : null}
                       </div>

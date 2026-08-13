@@ -82,11 +82,11 @@ export interface PullRequestTabStatus {
 
 const SURFACE_DISABLED_REASONS = {
   browser: `Browser previews are only available in the ${APP_BASE_NAME} desktop app.`,
-  terminal: "Terminal surfaces are only available from a project thread.",
-  files: "Files are only available when a project is open.",
-  diff: "Diff is only available for server threads in Git repositories.",
-  pullRequest: "This thread's branch has no pull request yet.",
-  agents: "Agents are only available from a thread.",
+  terminal: "The terminal is only available from a task in a workspace.",
+  files: "Files are only available when a workspace is open.",
+  diff: "Diff is only available for tasks in Git repositories.",
+  pullRequest: "This task's branch has no pull request yet.",
+  agents: "Agents are only available from a task.",
 } as const;
 
 type TabContextMenuAction = "copy-path" | "close" | "close-others" | "close-to-right" | "close-all";
@@ -164,7 +164,7 @@ function RightPanelEmptyState(props: {
     },
     {
       label: "Diff",
-      description: "Review changes in this thread.",
+      description: "Review changes in this task.",
       icon: FileDiff,
       available: props.diffAvailable,
       disabledReason: SURFACE_DISABLED_REASONS.diff,
@@ -173,7 +173,7 @@ function RightPanelEmptyState(props: {
     },
     {
       label: "Pull request",
-      description: "Open the pull request for this thread's branch.",
+      description: "Open the pull request for this task's branch.",
       icon: GitPullRequest,
       available: props.pullRequestAvailable,
       disabledReason: SURFACE_DISABLED_REASONS.pullRequest,

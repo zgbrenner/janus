@@ -154,7 +154,7 @@ export function ReviewThreadCard({
             onClick={onFix}
           >
             <HammerIcon className="size-3" />
-            {fixPending ? "Preparing..." : "Fix in a thread"}
+            {fixPending ? "Preparing..." : "Fix in a task"}
           </Button>
         ) : null}
         {canResolve ? (

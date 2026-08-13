@@ -19,6 +19,7 @@ import { hasCloudPublicConfig } from "~/cloud/publicConfig";
 import { cn } from "~/lib/utils";
 import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "~/workspaceTitlebar";
 import { JanusMark } from "~/components/brand/JanusMark";
+import { APP_BASE_NAME } from "~/branding";
 
 function ChatIndexRouteView() {
   const { authGateState } = Route.useRouteContext();
@@ -166,12 +167,12 @@ function HostedStaticOnboardingState() {
               <EmptyDescription className="mt-2 text-sm leading-relaxed text-muted-foreground/78">
                 {cloudEnabled
                   ? "Sign in to connect a linked workspace through its managed tunnel, or add a reachable backend manually."
-                  : "Add a reachable workspace backend to start working from this browser."}
+                  : `This browser isn't connected to ${APP_BASE_NAME} yet. Open a pairing link from the computer where ${APP_BASE_NAME} is running, or connect to it from Connections.`}
               </EmptyDescription>
               <div className="mt-6 flex justify-center">
                 <Button render={<Link to="/settings/connections" />} size="sm">
                   <PlusIcon className="size-4" />
-                  {cloudEnabled ? "Open Connections" : "Add workspace"}
+                  Open Connections
                 </Button>
               </div>
             </EmptyHeader>
