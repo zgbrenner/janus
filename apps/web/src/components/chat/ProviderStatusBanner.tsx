@@ -1,8 +1,13 @@
 import { type ServerProvider } from "@t3tools/contracts";
 import { memo } from "react";
-import { InfoIcon, XIcon } from "lucide-react";
+import { CopyIcon, InfoIcon, XIcon } from "lucide-react";
+import { APP_BASE_NAME } from "~/branding";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
+import { openExternalUrl } from "~/lib/openExternalUrl";
 import { cn } from "~/lib/utils";
+import { getProviderGuidance } from "~/providerGuidance";
 import { formatProviderDriverKindLabel } from "../../providerModels";
+import { toastManager } from "../ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
 export function getProviderStatusBannerKey(status: ServerProvider | null): string | null {
@@ -19,6 +24,37 @@ export function shouldShowProviderStatusBanner(
   return bannerKey !== null && bannerKey !== dismissedBannerKey;
 }
 
+function CopyCommandAction({ command, providerName }: { command: string; providerName: string }) {
+  const { copyToClipboard } = useCopyToClipboard({
+    target: "sign-in command",
+    onCopy: () => {
+      toastManager.add({
+        type: "success",
+        title: `${providerName} sign-in command copied`,
+        description: "Paste it into a terminal and follow the sign-in steps.",
+      });
+    },
+    onError: (error) => {
+      toastManager.add({
+        type: "error",
+        title: `Could not copy the ${providerName} sign-in command`,
+        description: error.message,
+      });
+    },
+  });
+  return (
+    <button
+      type="button"
+      className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border/60 bg-foreground/4 px-2 py-1 font-mono text-xs text-foreground transition-colors hover:bg-foreground/8 focus-visible:ring-2 focus-visible:ring-ring"
+      aria-label={`Copy the ${providerName} sign-in command`}
+      onClick={() => copyToClipboard(command)}
+    >
+      <code>{command}</code>
+      <CopyIcon aria-hidden className="size-3 shrink-0 text-muted-foreground" />
+    </button>
+  );
+}
+
 export const ProviderStatusBanner = memo(function ProviderStatusBanner({
   onDismiss,
   status,
@@ -31,16 +67,43 @@ export const ProviderStatusBanner = memo(function ProviderStatusBanner({
   }
 
   const providerName = status.displayName?.trim() || formatProviderDriverKindLabel(status.driver);
-  const isUnauthenticated = status.status === "error" && status.auth.status === "unauthenticated";
-  const title = isUnauthenticated
-    ? `${providerName} is unauthenticated`
-    : `${providerName} provider status`;
-  const message = isUnauthenticated
-    ? "Sign in via the CLI to authenticate again."
-    : (status.message ??
-      (status.status === "error"
-        ? `${providerName} provider is unavailable.`
-        : `${providerName} provider has limited availability.`));
+  const guidance = getProviderGuidance(status.driver);
+  const isNotInstalled = !status.installed;
+  const isUnauthenticated =
+    !isNotInstalled && status.status === "error" && status.auth.status === "unauthenticated";
+
+  const title = isNotInstalled
+    ? `${providerName} isn't installed`
+    : isUnauthenticated
+      ? `${providerName} needs sign-in`
+      : `${providerName} provider status`;
+  const message = isNotInstalled
+    ? `${APP_BASE_NAME} can't find ${providerName} on this computer. Install it, then restart ${APP_BASE_NAME}.`
+    : isUnauthenticated
+      ? guidance
+        ? "Copy the command below, paste it into a terminal, and follow the sign-in steps."
+        : "Sign in with the provider's terminal app, then try again."
+      : (status.message ??
+        (status.status === "error"
+          ? `${providerName} provider is unavailable.`
+          : `${providerName} provider has limited availability.`));
+  // The server's own report often carries specifics (a configured binary
+  // path, the exact probe failure); keep it reachable via the tooltip.
+  const messageDetail = status.message ?? message;
+
+  const action = isNotInstalled ? (
+    guidance ? (
+      <button
+        type="button"
+        className="inline-flex w-fit cursor-pointer items-center rounded-md border border-border/60 bg-foreground/4 px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-foreground/8 focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => openExternalUrl(guidance.installUrl, "Unable to open the install page")}
+      >
+        Get {providerName}
+      </button>
+    ) : null
+  ) : isUnauthenticated && guidance ? (
+    <CopyCommandAction command={guidance.loginCommand} providerName={providerName} />
+  ) : null;
 
   return (
     <div className="pointer-events-auto mx-auto w-fit max-w-[calc(100%-2rem)] pt-3">
@@ -62,9 +125,10 @@ export const ProviderStatusBanner = memo(function ProviderStatusBanner({
               render={<div className="line-clamp-3 text-muted-foreground">{message}</div>}
             />
             <TooltipPopup side="top" className="max-w-96 whitespace-pre-wrap">
-              {message}
+              {messageDetail}
             </TooltipPopup>
           </Tooltip>
+          {action}
         </div>
         <button
           type="button"

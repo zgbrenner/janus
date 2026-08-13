@@ -63,4 +63,59 @@ describe("ProviderStatusBanner", () => {
 
     expect(markup).toContain('aria-label="Dismiss Codex provider error"');
   });
+
+  it("offers a copyable sign-in command when a known provider is unauthenticated", () => {
+    const markup = renderToStaticMarkup(
+      <ProviderStatusBanner
+        status={{
+          ...warningProvider(),
+          status: "error",
+          auth: { status: "unauthenticated" },
+          message: "Codex CLI is not authenticated. Run `codex login` and try again.",
+        }}
+        onDismiss={() => {}}
+      />,
+    );
+
+    expect(markup).toContain("Codex needs sign-in");
+    expect(markup).toContain("codex login");
+    expect(markup).toContain('aria-label="Copy the Codex sign-in command"');
+    expect(markup).not.toContain("is unauthenticated");
+  });
+
+  it("points at the install page when a known provider is missing", () => {
+    const markup = renderToStaticMarkup(
+      <ProviderStatusBanner
+        status={{
+          ...warningProvider(),
+          status: "error",
+          installed: false,
+          message: "Codex CLI (`codex`) is not installed or not on PATH.",
+        }}
+        onDismiss={() => {}}
+      />,
+    );
+
+    expect(markup).toContain("Codex isn&#x27;t installed");
+    expect(markup).toContain("Get Codex");
+    expect(markup).not.toContain("PATH.</div>");
+  });
+
+  it("falls back to plain guidance for fork drivers it does not know", () => {
+    const markup = renderToStaticMarkup(
+      <ProviderStatusBanner
+        status={{
+          ...warningProvider(),
+          driver: ProviderDriverKind.make("my-fork"),
+          displayName: "My Fork",
+          status: "error",
+          auth: { status: "unauthenticated" },
+        }}
+        onDismiss={() => {}}
+      />,
+    );
+
+    expect(markup).toContain("My Fork needs sign-in");
+    expect(markup).toContain("Sign in with the provider&#x27;s terminal app");
+  });
 });
