@@ -1,7 +1,8 @@
 import type { EnvironmentId, ServerConfig, ServerSelfUpdateCapability } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
 
-import { APP_VERSION } from "./branding";
+import { APP_BASE_NAME, APP_VERSION } from "./branding";
+import { getDesktopUpdateReleaseUrl } from "./components/desktopUpdate.logic";
 import { getLocalStorageItem, setLocalStorageItem } from "./hooks/useLocalStorage";
 
 export interface VersionMismatch {
@@ -39,7 +40,7 @@ export function resolveVersionMismatch(
   return {
     clientVersion: normalizedClientVersion,
     serverVersion: normalizedServerVersion,
-    hint: "Version mismatch. Try syncing the client and server to the same T3 Code version.",
+    hint: `Version mismatch. Try syncing the client and server to the same ${APP_BASE_NAME} version.`,
   };
 }
 
@@ -57,9 +58,10 @@ export function resolveServerSelfUpdateCapability(
   return serverConfig?.environment.capabilities.serverSelfUpdate ?? null;
 }
 
-/** The command to hand users whose server cannot update itself. */
-export function manualServerUpdateCommand(targetVersion: string): string {
-  return `npx t3@${targetVersion}`;
+/** The release download link to hand users whose server cannot update itself.
+    Janus ships through GitHub Releases only, so there is no install command to copy. */
+export function manualServerUpdateUrl(targetVersion: string): string {
+  return getDesktopUpdateReleaseUrl(targetVersion) ?? "https://github.com/zgbrenner/janus/releases";
 }
 
 /** One sentence telling the user how to resolve version skew for a server,
@@ -73,9 +75,9 @@ export function serverUpdateGuidance(
     case "respawn":
       return `Update the ${serverLabel} so they stay in sync.`;
     case "desktop-managed":
-      return `The ${serverLabel} is run by the T3 Code desktop app on its machine — update the desktop app there to sync them.`;
+      return `The ${serverLabel} is run by the ${APP_BASE_NAME} desktop app on its machine — update the desktop app there to sync them.`;
     default:
-      return `Relaunch the ${serverLabel} with the copied command to sync them.`;
+      return `Install the ${APP_BASE_NAME} release from the copied link on that machine to sync them.`;
   }
 }
 

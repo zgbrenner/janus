@@ -7,6 +7,7 @@ import {
   buildVersionMismatchDismissalKey,
   dismissVersionMismatch,
   isVersionMismatchDismissed,
+  manualServerUpdateUrl,
   resolveServerConfigVersionMismatch,
   resolveServerSelfUpdateCapability,
   resolveVersionMismatch,
@@ -22,7 +23,7 @@ describe("versionSkew", () => {
     expect(resolveVersionMismatch("9.9.9")).toEqual({
       clientVersion: APP_VERSION,
       serverVersion: "9.9.9",
-      hint: "Version mismatch. Try syncing the client and server to the same T3 Code version.",
+      hint: "Version mismatch. Try syncing the client and server to the same Janus version.",
     });
   });
 
@@ -74,7 +75,7 @@ describe("versionSkew", () => {
     const mismatch = resolveVersionMismatch("9.9.9");
 
     expect(appendVersionMismatchHint("Socket closed.", mismatch)).toBe(
-      "Socket closed. Hint: Version mismatch. Try syncing the client and server to the same T3 Code version.",
+      "Socket closed. Hint: Version mismatch. Try syncing the client and server to the same Janus version.",
     );
   });
 
@@ -101,10 +102,17 @@ describe("versionSkew", () => {
       "Update the Remote server so they stay in sync.",
     );
     expect(serverUpdateGuidance("desktop-managed", "Desktop server")).toBe(
-      "The Desktop server is run by the T3 Code desktop app on its machine — update the desktop app there to sync them.",
+      "The Desktop server is run by the Janus desktop app on its machine — update the desktop app there to sync them.",
     );
     expect(serverUpdateGuidance(null, "Local server")).toBe(
-      "Relaunch the Local server with the copied command to sync them.",
+      "Install the Janus release from the copied link on that machine to sync them.",
     );
+  });
+
+  it("hands manual updaters the Janus release download link, never an npm command", () => {
+    expect(manualServerUpdateUrl("1.2.3")).toBe(
+      "https://github.com/zgbrenner/janus/releases/tag/v1.2.3",
+    );
+    expect(manualServerUpdateUrl("  ")).toBe("https://github.com/zgbrenner/janus/releases");
   });
 });

@@ -81,6 +81,7 @@ import { useAtomCommand } from "../state/use-atom-command";
 import { cn } from "~/lib/utils";
 import { getSourceControlPresentationForKind } from "~/sourceControlPresentation";
 import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "~/workspaceTitlebar";
+import { APP_BASE_NAME } from "~/branding";
 
 export interface PullRequestsSearch {
   readonly involvement: PullRequestInvolvement;
@@ -936,7 +937,7 @@ function PullRequestsRouteView() {
       ) : !pullRequestsSupported ? (
         <PullRequestsUnavailableState
           title="Pull requests unavailable"
-          error="Update this environment's T3 Code server to browse pull requests."
+          error={`Update this environment's ${APP_BASE_NAME} server to browse pull requests.`}
         />
       ) : firstLoad ? (
         <PullRequestListGhost rows={7} />
