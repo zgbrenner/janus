@@ -10,6 +10,7 @@ import { makeComponentLogger } from "../app/DesktopObservability.ts";
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronDialog from "../electron/ElectronDialog.ts";
 import * as ElectronMenu from "../electron/ElectronMenu.ts";
+import * as ElectronShell from "../electron/ElectronShell.ts";
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
 import * as DesktopUpdates from "../updates/DesktopUpdates.ts";
 import * as DesktopWindow from "./DesktopWindow.ts";
@@ -36,7 +37,11 @@ export class DesktopApplicationMenu extends Context.Service<
 type DesktopApplicationMenuRuntimeServices =
   | DesktopUpdates.DesktopUpdates
   | DesktopWindow.DesktopWindow
-  | ElectronDialog.ElectronDialog;
+  | ElectronDialog.ElectronDialog
+  | ElectronShell.ElectronShell;
+
+/** The shipped user guide; the Help menu opens it in the default browser. */
+const HELP_URL = "https://github.com/zgbrenner/janus/blob/main/docs/README.md";
 
 const { logInfo: logUpdaterInfo } = makeComponentLogger("desktop-updater");
 
@@ -55,6 +60,11 @@ const zoomMainWindow = Effect.fn("desktop.menu.zoomMainWindow")(function* (
   const desktopWindow = yield* DesktopWindow.DesktopWindow;
   yield* desktopWindow.zoomMain(direction);
 });
+
+const openHelpFromMenu = Effect.gen(function* () {
+  const shell = yield* ElectronShell.ElectronShell;
+  yield* shell.openExternal(HELP_URL);
+}).pipe(Effect.withSpan("desktop.menu.openHelp"));
 
 const checkForUpdatesFromMenu = Effect.gen(function* () {
   const updates = yield* DesktopUpdates.DesktopUpdates;
@@ -133,6 +143,9 @@ export const make = Effect.gen(function* () {
     };
     const settingsClick = () => {
       runMenuEffect("open-settings", dispatchMenuAction("open-settings"));
+    };
+    const helpClick = () => {
+      runMenuEffect("open-help", openHelpFromMenu);
     };
     const zoomClick = (direction: DesktopWindow.MainWindowZoomDirection) => () => {
       runMenuEffect(`zoom-${direction}`, zoomMainWindow(direction));
@@ -214,6 +227,11 @@ export const make = Effect.gen(function* () {
       {
         role: "help",
         submenu: [
+          {
+            label: `${appName} Help`,
+            click: helpClick,
+          },
+          { type: "separator" },
           {
             label: "Check for Updates...",
             click: checkForUpdatesClick,

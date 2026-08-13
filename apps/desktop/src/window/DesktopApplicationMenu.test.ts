@@ -10,6 +10,7 @@ import type * as Electron from "electron";
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronDialog from "../electron/ElectronDialog.ts";
 import * as ElectronMenu from "../electron/ElectronMenu.ts";
+import * as ElectronShell from "../electron/ElectronShell.ts";
 import * as DesktopApplicationMenu from "./DesktopApplicationMenu.ts";
 import * as DesktopConfig from "../app/DesktopConfig.ts";
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
@@ -95,9 +96,16 @@ const makeElectronMenuLayer = (
     showContextMenu: () => Effect.succeed(Option.none()),
   } satisfies ElectronMenu.ElectronMenu["Service"]);
 
+const makeElectronShellLayer = (openedUrl: Deferred.Deferred<string>) =>
+  Layer.succeed(ElectronShell.ElectronShell, {
+    openExternal: (rawUrl) => Deferred.succeed(openedUrl, String(rawUrl)).pipe(Effect.as(true)),
+    copyText: () => Effect.void,
+  } satisfies ElectronShell.ElectronShell["Service"]);
+
 const configureMenu = (
   selectedAction: Deferred.Deferred<string>,
   applicationMenuTemplate: Deferred.Deferred<readonly Electron.MenuItemConstructorOptions[]>,
+  openedUrl: Deferred.Deferred<string>,
 ) =>
   Effect.gen(function* () {
     const menu = yield* DesktopApplicationMenu.DesktopApplicationMenu;
@@ -107,6 +115,7 @@ const configureMenu = (
       DesktopApplicationMenu.layer.pipe(
         Layer.provideMerge(makeElectronMenuLayer(applicationMenuTemplate)),
         Layer.provideMerge(makeDesktopWindowLayer(selectedAction)),
+        Layer.provideMerge(makeElectronShellLayer(openedUrl)),
         Layer.provideMerge(desktopUpdatesLayer),
         Layer.provideMerge(electronDialogLayer),
         Layer.provideMerge(electronAppLayer),
@@ -125,8 +134,9 @@ describe("DesktopApplicationMenu", () => {
       const selectedAction = yield* Deferred.make<string>();
       const applicationMenuTemplate =
         yield* Deferred.make<readonly Electron.MenuItemConstructorOptions[]>();
+      const openedUrl = yield* Deferred.make<string>();
 
-      yield* configureMenu(selectedAction, applicationMenuTemplate);
+      yield* configureMenu(selectedAction, applicationMenuTemplate, openedUrl);
 
       const template = yield* Deferred.await(applicationMenuTemplate);
       const fileMenu = template.find((item) => item.label === "File");
@@ -154,8 +164,9 @@ describe("DesktopApplicationMenu", () => {
       const selectedAction = yield* Deferred.make<string>();
       const applicationMenuTemplate =
         yield* Deferred.make<readonly Electron.MenuItemConstructorOptions[]>();
+      const openedUrl = yield* Deferred.make<string>();
 
-      yield* configureMenu(selectedAction, applicationMenuTemplate);
+      yield* configureMenu(selectedAction, applicationMenuTemplate, openedUrl);
 
       const template = yield* Deferred.await(applicationMenuTemplate);
       const viewMenu = template.find((item) => item.label === "View");
@@ -177,6 +188,36 @@ describe("DesktopApplicationMenu", () => {
 
       zoomIn.click({} as Electron.MenuItem, {} as Electron.BrowserWindow, {} as KeyboardEvent);
       assert.equal(yield* Deferred.await(selectedAction), "zoom-in");
+    }),
+  );
+
+  it.effect("gives the Help menu a link to the shipped user guide", () =>
+    Effect.gen(function* () {
+      const selectedAction = yield* Deferred.make<string>();
+      const applicationMenuTemplate =
+        yield* Deferred.make<readonly Electron.MenuItemConstructorOptions[]>();
+      const openedUrl = yield* Deferred.make<string>();
+
+      yield* configureMenu(selectedAction, applicationMenuTemplate, openedUrl);
+
+      const template = yield* Deferred.await(applicationMenuTemplate);
+      const helpMenu = template.find((item) => item.role === "help");
+      assert.isDefined(helpMenu);
+      if (!Array.isArray(helpMenu.submenu)) {
+        throw new Error("Expected Help menu submenu to be an array.");
+      }
+
+      const helpItem = helpMenu.submenu.find((item) => item.label === "Janus Help");
+      assert.isDefined(helpItem);
+      if (typeof helpItem.click !== "function") {
+        throw new Error("Expected Help menu item to have a click handler.");
+      }
+
+      helpItem.click({} as Electron.MenuItem, {} as Electron.BrowserWindow, {} as KeyboardEvent);
+      assert.equal(
+        yield* Deferred.await(openedUrl),
+        "https://github.com/zgbrenner/janus/blob/main/docs/README.md",
+      );
     }),
   );
 });
