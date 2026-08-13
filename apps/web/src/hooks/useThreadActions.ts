@@ -47,7 +47,7 @@ export class ThreadArchiveBlockedError extends Schema.TaggedErrorClass<ThreadArc
   },
 ) {
   override get message(): string {
-    return "Cannot archive a running thread.";
+    return "Cannot archive a running task.";
   }
 }
 
@@ -71,7 +71,7 @@ export class ThreadSettleBlockedError extends Schema.TaggedErrorClass<ThreadSett
   },
 ) {
   override get message(): string {
-    return "This thread still needs attention. Resolve or interrupt it first, then try again.";
+    return "This task still needs attention. Resolve or interrupt it first, then try again.";
   }
 }
 
@@ -95,7 +95,7 @@ export class ThreadSnoozeBlockedError extends Schema.TaggedErrorClass<ThreadSnoo
   },
 ) {
   override get message(): string {
-    return "This thread is waiting on you. Respond to the pending request before snoozing it.";
+    return "This task is waiting on you. Respond to the pending request before snoozing it.";
   }
 }
 
@@ -319,7 +319,7 @@ export function useThreadActions() {
         const confirmationResult = await settlePromise(() =>
           localApi.dialogs.confirm(
             [
-              "This thread is the only one linked to this worktree:",
+              "This task is the only one linked to this worktree:",
               displayWorktreePath ?? orphanedWorktreePath,
               "",
               "Delete the worktree too?",
@@ -444,7 +444,7 @@ export function useThreadActions() {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Thread deleted, but worktree removal failed",
+            title: "Task deleted, but worktree removal failed",
             description: `Could not remove ${displayWorktreePath ?? orphanedWorktreePath}. ${message}`,
           }),
         );
@@ -672,12 +672,12 @@ export function useThreadActions() {
       const resolved = resolveThreadTarget(target);
 
       if (confirmThreadDelete && localApi) {
-        const title = resolved?.thread.title ?? "this thread";
+        const title = resolved?.thread.title ?? "this task";
         const confirmationResult = await settlePromise(() =>
           localApi.dialogs.confirm(
             [
-              `Delete thread "${title}"?`,
-              "This permanently clears conversation history for this thread.",
+              `Delete task "${title}"?`,
+              "This permanently clears conversation history for this task.",
             ].join("\n"),
             { variant: "destructive" },
           ),

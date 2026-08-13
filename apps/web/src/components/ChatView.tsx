@@ -1910,7 +1910,7 @@ function ChatViewContent(props: ChatViewProps) {
   const openOrReuseProjectDraftThread = useCallback(
     async (input: { branch: string; worktreePath: string | null; envMode: DraftThreadEnvMode }) => {
       if (!activeProject) {
-        throw new Error("No active project is available for this pull request.");
+        throw new Error("No active workspace is available for this pull request.");
       }
       const activeProjectRef = scopeProjectRef(activeProject.environmentId, activeProject.id);
       const logicalProjectKey = deriveLogicalProjectKeyFromSettings(
@@ -4223,7 +4223,7 @@ function ChatViewContent(props: ChatViewProps) {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to un-settle thread",
+            title: "Failed to un-settle task",
             description: error instanceof Error ? error.message : "An error occurred.",
           }),
         );
@@ -4251,7 +4251,7 @@ function ChatViewContent(props: ChatViewProps) {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to wake thread",
+            title: "Failed to wake task",
             description: error instanceof Error ? error.message : "An error occurred.",
           }),
         );
@@ -4344,7 +4344,7 @@ function ChatViewContent(props: ChatViewProps) {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Checkout switched, but the thread could not be updated",
+              title: "Checkout switched, but the task could not be updated",
               description: chatActionErrorMessage(squashAtomCommandFailure(updateResult)),
             }),
           );
@@ -4457,7 +4457,7 @@ function ChatViewContent(props: ChatViewProps) {
       id: `thread-woke:${activeThread?.id ?? "unknown"}`,
       variant: "info",
       icon: <AlarmClockIcon />,
-      title: "This thread woke from snooze",
+      title: "This task woke from snooze",
       description: "Dismiss to clear the Woke indicator, or send a message to keep going.",
       dismissLabel: "Dismiss Woke notification",
       onDismiss: acknowledgeActiveThreadWoke,
@@ -4479,7 +4479,7 @@ function ChatViewContent(props: ChatViewProps) {
       id: `thread-${isSnoozed ? "snoozed" : "settled"}:${activeThread?.id ?? "unknown"}`,
       variant: "info",
       icon: isSnoozed ? <AlarmClockIcon /> : <CheckCircle2Icon />,
-      title: `This thread is ${isSnoozed ? "snoozed" : "settled"}`,
+      title: `This task is ${isSnoozed ? "snoozed" : "settled"}`,
       description: isSnoozed
         ? "Sending a message wakes it and moves it back to Active in the sidebar."
         : "Sending a message moves it back to Active in the sidebar.",
@@ -4839,8 +4839,8 @@ function ChatViewContent(props: ChatViewProps) {
       }
       const confirmed = await localApi.dialogs.confirm(
         [
-          `Revert this thread to checkpoint ${turnCount}?`,
-          "This will discard newer messages and turn diffs in this thread.",
+          `Revert this task to checkpoint ${turnCount}?`,
+          "This will discard newer messages and turn diffs in this task.",
           "This action cannot be undone.",
         ].join("\n"),
         { variant: "destructive" },
@@ -4862,7 +4862,7 @@ function ChatViewContent(props: ChatViewProps) {
         const error = squashAtomCommandFailure(result);
         setThreadError(
           activeThread.id,
-          error instanceof Error ? error.message : "Failed to revert thread state.",
+          error instanceof Error ? error.message : "Failed to revert task state.",
         );
       }
       setIsRevertingCheckpoint(false);
@@ -5031,8 +5031,8 @@ function ChatViewContent(props: ChatViewProps) {
       toastManager.add(
         stackedThreadToast({
           type: "warning",
-          title: "Choose a project first",
-          description: "This draft no longer points to an available project.",
+          title: "Choose a workspace first",
+          description: "This draft no longer points to an available workspace.",
         }),
       );
       return;

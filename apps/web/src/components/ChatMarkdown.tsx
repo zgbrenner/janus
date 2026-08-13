@@ -1398,7 +1398,7 @@ function ChatMarkdown({
           AsyncResult.failure<void, BrowserPreviewUnavailableError>(
             Cause.fail(
               new BrowserPreviewUnavailableError({
-                message: "Thread context is unavailable.",
+                message: "Task context is unavailable.",
               }),
             ),
           ),

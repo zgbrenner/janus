@@ -262,11 +262,11 @@ function projectExpansionPreferenceKeys(project: SidebarProjectSnapshot): string
 function projectGroupingModeDescription(mode: SidebarProjectGroupingMode): string {
   switch (mode) {
     case "repository":
-      return "Projects from the same repository share one sidebar row.";
+      return "Workspaces from the same repository share one sidebar row.";
     case "repository_path":
-      return "Projects group only when both the repository and repo-relative path match.";
+      return "Workspaces group only when both the repository and repo-relative path match.";
     case "separate":
-      return "Every project path gets its own sidebar row.";
+      return "Every workspace path gets its own sidebar row.";
   }
 }
 
@@ -533,7 +533,7 @@ export const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThr
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Thread action failed",
+                title: "Task action failed",
                 description: error instanceof Error ? error.message : "An error occurred.",
               }),
             );
@@ -557,7 +557,7 @@ export const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThr
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Thread action failed",
+              title: "Task action failed",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -993,7 +993,7 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
             data-thread-selection-safe
             className="flex h-8 w-full translate-x-0 items-center px-2 text-left text-xs text-sidebar-muted-foreground/75"
           >
-            <span>No threads yet</span>
+            <span>No tasks yet</span>
           </div>
         </SidebarMenuSubItem>
       ) : null}
@@ -1147,7 +1147,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
     onCopy: (ctx) => {
       toastManager.add({
         type: "success",
-        title: "Thread ID copied",
+        title: "Task ID copied",
         description: ctx.threadId,
       });
     },
@@ -1155,7 +1155,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Failed to copy thread ID",
+          title: "Failed to copy task ID",
           description: error instanceof Error ? error.message : "An error occurred.",
         }),
       );
@@ -1480,8 +1480,8 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         const warningToastId = toastManager.add(
           stackedThreadToast({
             type: "warning",
-            title: "Project is not empty",
-            description: "Delete all threads in this project before removing it.",
+            title: "Workspace is not empty",
+            description: "Delete all tasks in this workspace before removing it.",
             actionVariant: "destructive",
             actionProps: {
               children: "Delete anyway",
@@ -1502,24 +1502,24 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
                   const confirmed = await api.dialogs.confirm(
                     latestProjectThreads.length > 0
                       ? [
-                          `Remove project "${member.title}" and delete its ${latestProjectThreads.length} thread${
+                          `Remove workspace "${member.title}" and delete its ${latestProjectThreads.length} thread${
                             latestProjectThreads.length === 1 ? "" : "s"
                           }?`,
                           `Path: ${member.workspaceRoot}`,
                           ...(member.environmentLabel
                             ? [`Environment: ${member.environmentLabel}`]
                             : []),
-                          "This permanently clears conversation history for those threads.",
-                          "This removes only this project entry.",
+                          "This permanently clears conversation history for those tasks.",
+                          "This removes only this workspace entry.",
                           "This action cannot be undone.",
                         ].join("\n")
                       : [
-                          `Remove project "${member.title}"?`,
+                          `Remove workspace "${member.title}"?`,
                           `Path: ${member.workspaceRoot}`,
                           ...(member.environmentLabel
                             ? [`Environment: ${member.environmentLabel}`]
                             : []),
-                          "This removes only this project entry.",
+                          "This removes only this workspace entry.",
                         ].join("\n"),
                     { variant: "destructive" },
                   );
@@ -1537,13 +1537,13 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
                         description:
                           error instanceof Error
                             ? error.message
-                            : "Unknown error removing project.",
+                            : "Unknown error removing workspace.",
                       }),
                     );
                   }
                 })().catch((error) => {
                   const message =
-                    error instanceof Error ? error.message : "Unknown error removing project.";
+                    error instanceof Error ? error.message : "Unknown error removing workspace.";
                   console.error("Failed to remove project", {
                     projectId: member.id,
                     environmentId: member.environmentId,
@@ -1565,10 +1565,10 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       }
 
       const message = [
-        `Remove project "${member.title}"?`,
+        `Remove workspace "${member.title}"?`,
         `Path: ${member.workspaceRoot}`,
         ...(member.environmentLabel ? [`Environment: ${member.environmentLabel}`] : []),
-        "This removes only this project entry.",
+        "This removes only this workspace entry.",
       ].join("\n");
       const confirmed = await api.dialogs.confirm(message, { variant: "destructive" });
       if (!confirmed) {
@@ -1578,7 +1578,8 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       const result = await removeProject(member);
       if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
         const error = squashAtomCommandFailure(result);
-        const message = error instanceof Error ? error.message : "Unknown error removing project.";
+        const message =
+          error instanceof Error ? error.message : "Unknown error removing workspace.";
         console.error("Failed to remove project", {
           projectId: member.id,
           environmentId: member.environmentId,
@@ -1822,7 +1823,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Thread archived, but navigation failed",
+              title: "Task archived, but navigation failed",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -1834,7 +1835,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Failed to archive threads",
+                title: "Failed to archive tasks",
                 description: error instanceof Error ? error.message : "An error occurred.",
               }),
             );
@@ -1851,7 +1852,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         const confirmed = await api.dialogs.confirm(
           [
             `Delete ${count} thread${count === 1 ? "" : "s"}?`,
-            "This permanently clears conversation history for these threads.",
+            "This permanently clears conversation history for these tasks.",
           ].join("\n"),
           { variant: "destructive" },
         );
@@ -1869,7 +1870,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
             toastManager.add(
               stackedThreadToast({
                 type: "error",
-                title: "Failed to delete threads",
+                title: "Failed to delete tasks",
                 description: error instanceof Error ? error.message : "An error occurred.",
               }),
             );
@@ -1906,7 +1907,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Could not create thread",
+              title: "Could not create task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -1978,7 +1979,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to archive thread",
+            title: "Failed to archive task",
             description: error instanceof Error ? error.message : "An error occurred.",
           }),
         );
@@ -2013,7 +2014,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       if (trimmed.length === 0) {
         toastManager.add({
           type: "warning",
-          title: "Thread title cannot be empty",
+          title: "Task title cannot be empty",
         });
         finishRename();
         return;
@@ -2034,7 +2035,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to rename thread",
+            title: "Failed to rename task",
             description: error instanceof Error ? error.message : "An error occurred.",
           }),
         );
@@ -2058,7 +2059,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
     if (trimmed.length === 0) {
       toastManager.add({
         type: "warning",
-        title: "Project title cannot be empty",
+        title: "Workspace title cannot be empty",
       });
       return;
     }
@@ -2082,7 +2083,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Failed to rename project",
+          title: "Failed to rename workspace",
           description: error instanceof Error ? error.message : "An error occurred.",
         }),
       );
@@ -2135,12 +2136,12 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       const clicked = await api.contextMenu.show(
         [
           ...(thread.branch
-            ? [{ id: "new-thread-on-branch", label: `New thread on ${thread.branch}` }]
+            ? [{ id: "new-thread-on-branch", label: `New task on ${thread.branch}` }]
             : []),
-          { id: "rename", label: "Rename thread" },
+          { id: "rename", label: "Rename task" },
           { id: "mark-unread", label: "Mark unread" },
           { id: "copy-path", label: "Copy Path" },
-          { id: "copy-thread-id", label: "Copy Thread ID" },
+          { id: "copy-thread-id", label: "Copy task ID" },
           { id: "delete", label: "Delete", destructive: true, icon: "trash" },
         ],
         position,
@@ -2162,7 +2163,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Could not create thread",
+              title: "Could not create task",
               description: error instanceof Error ? error.message : "An error occurred.",
             }),
           );
@@ -2185,7 +2186,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
             stackedThreadToast({
               type: "error",
               title: "Path unavailable",
-              description: "This thread does not have a workspace path to copy.",
+              description: "This task does not have a workspace path to copy.",
             }),
           );
           return;
@@ -2201,8 +2202,8 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       if (appSettingsConfirmThreadDelete) {
         const confirmed = await api.dialogs.confirm(
           [
-            `Delete thread "${thread.title}"?`,
-            "This permanently clears conversation history for this thread.",
+            `Delete task "${thread.title}"?`,
+            "This permanently clears conversation history for this task.",
           ].join("\n"),
           { variant: "destructive" },
         );
@@ -2216,7 +2217,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Failed to delete thread",
+            title: "Failed to delete task",
             description: error instanceof Error ? error.message : "An error occurred.",
           }),
         );
@@ -2304,8 +2305,8 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
                 <span
                   aria-label={
                     project.allRemoteMembersAreDesktopLocal
-                      ? "Local sandbox project"
-                      : "Remote project"
+                      ? "Local sandbox workspace"
+                      : "Remote workspace"
                   }
                   className="pointer-events-none absolute top-1 right-1.5 inline-flex size-5 items-center justify-center rounded-md text-icon-muted transition-opacity duration-150 max-sm:right-7 group-hover/project-header:opacity-0 group-focus-within/project-header:opacity-0 max-sm:group-hover/project-header:opacity-100 max-sm:group-focus-within/project-header:opacity-100"
                 />
@@ -2330,7 +2331,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
               <div className="pointer-events-none absolute top-[calc(50%+1px)] right-0.5 -translate-y-1/2 opacity-0 transition-opacity duration-150 max-sm:pointer-events-auto max-sm:opacity-100 group-hover/project-header:pointer-events-auto group-hover/project-header:opacity-100 group-focus-within/project-header:pointer-events-auto group-focus-within/project-header:opacity-100">
                 <button
                   type="button"
-                  aria-label={`Create new thread in ${project.displayName}`}
+                  aria-label={`Create new task in ${project.displayName}`}
                   data-testid="new-thread-button"
                   className={SIDEBAR_ICON_ACTION_BUTTON_CLASS}
                   onClick={handleCreateThreadClick}
@@ -2341,7 +2342,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
             }
           />
           <TooltipPopup side="top">
-            {newThreadShortcutLabel ? `New thread (${newThreadShortcutLabel})` : "New thread"}
+            {newThreadShortcutLabel ? `New task (${newThreadShortcutLabel})` : "New task"}
           </TooltipPopup>
         </Tooltip>
       </div>
@@ -2394,18 +2395,18 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       >
         <DialogPopup className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Rename project</DialogTitle>
+            <DialogTitle>Rename workspace</DialogTitle>
             <DialogDescription>
               {projectRenameTarget
                 ? `Update the title for ${projectRenameTarget.workspaceRoot}.`
-                : "Update the project title."}
+                : "Update the workspace title."}
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="space-y-4">
             <div className="grid gap-1.5">
-              <span className="text-xs font-medium text-foreground">Project title</span>
+              <span className="text-xs font-medium text-foreground">Workspace title</span>
               <Input
-                aria-label="Project title"
+                aria-label="Workspace title"
                 value={projectRenameTitle}
                 onChange={(event) => setProjectRenameTitle(event.target.value)}
                 onKeyDown={(event) => {
@@ -2441,11 +2442,11 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       >
         <DialogPopup className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Project grouping</DialogTitle>
+            <DialogTitle>Workspace grouping</DialogTitle>
             <DialogDescription>
               {projectGroupingTarget
                 ? `Choose how ${projectGroupingTarget.workspaceRoot} should be grouped in the sidebar.`
-                : "Choose how this project should be grouped in the sidebar."}
+                : "Choose how this workspace should be grouped in the sidebar."}
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="space-y-4">
@@ -2464,7 +2465,7 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
                   }
                 }}
               >
-                <SelectTrigger className="w-full" aria-label="Project grouping rule">
+                <SelectTrigger className="w-full" aria-label="Workspace grouping rule">
                   <SelectValue>
                     {projectGroupingSelection === "inherit"
                       ? `Use global default (${PROJECT_GROUPING_MODE_LABELS[projectGroupingSettings.sidebarProjectGroupingMode]})`
@@ -2679,7 +2680,7 @@ function ProjectSortMenu({
           </div>
           <div className="px-2 py-1">
             <NumberField
-              aria-label="Visible thread count"
+              aria-label="Visible task count"
               className="w-28 gap-0"
               max={MAX_SIDEBAR_THREAD_PREVIEW_COUNT}
               min={MIN_SIDEBAR_THREAD_PREVIEW_COUNT}
@@ -2690,11 +2691,11 @@ function ProjectSortMenu({
             >
               <NumberFieldGroup className="h-7 rounded-md sm:h-6.5">
                 <NumberFieldDecrement
-                  aria-label="Decrease visible thread count"
+                  aria-label="Decrease visible task count"
                   className="px-2 sm:px-2 [&_svg]:size-3.5"
                 />
                 <NumberFieldInput
-                  aria-label="Visible thread count"
+                  aria-label="Visible task count"
                   className="h-7 w-9 grow-0 px-0 text-xs leading-7 sm:h-6.5 sm:leading-6.5"
                   inputMode="numeric"
                   onKeyDownCapture={(event) => {
@@ -2702,7 +2703,7 @@ function ProjectSortMenu({
                   }}
                 />
                 <NumberFieldIncrement
-                  aria-label="Increase visible thread count"
+                  aria-label="Increase visible task count"
                   className="px-2 sm:px-2 [&_svg]:size-3.5"
                 />
               </NumberFieldGroup>
@@ -2922,7 +2923,7 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
                 render={
                   <button
                     type="button"
-                    aria-label="Add project"
+                    aria-label="Add workspace"
                     data-testid="sidebar-add-project-trigger"
                     className="inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-md px-[calc(--spacing(1)-1px)] text-icon-muted transition-colors hover:bg-accent hover:text-foreground"
                     onClick={openAddProject}
@@ -2931,7 +2932,7 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
               >
                 <FolderPlusIcon className="size-3.5" />
               </TooltipTrigger>
-              <TooltipPopup side="right">Add project</TooltipPopup>
+              <TooltipPopup side="right">Add workspace</TooltipPopup>
             </Tooltip>
           </div>
         </div>
@@ -3012,7 +3013,9 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
         )}
 
         {projectsLength === 0 && (
-          <div className="px-2 pt-4 text-center text-secondary-label text-xs">No projects yet</div>
+          <div className="px-2 pt-4 text-center text-secondary-label text-xs">
+            No workspaces yet
+          </div>
         )}
       </SidebarGroup>
     </SidebarContent>
