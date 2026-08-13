@@ -48,7 +48,7 @@ import {
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
-import { createDebouncedStorage, createMemoryStorage } from "./lib/storage";
+import { createDebouncedStorage, createMemoryStorage, flushOnPageExit } from "./lib/storage";
 import { getDefaultServerModel } from "./providerModels";
 import { UnifiedSettings } from "@t3tools/contracts/settings";
 import { ReviewCommentContextSchema, type ReviewCommentContext } from "./reviewCommentContext";
@@ -71,12 +71,11 @@ const composerDebouncedStorage = createDebouncedStorage(
   COMPOSER_PERSIST_DEBOUNCE_MS,
 );
 
-// Flush pending composer draft writes before page unload to prevent data loss.
-if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
-  window.addEventListener("beforeunload", () => {
-    composerDebouncedStorage.flush();
-  });
-}
+// Flush pending composer draft writes before the page goes away to prevent
+// data loss; see flushOnPageExit for why beforeunload alone is not enough.
+flushOnPageExit(() => {
+  composerDebouncedStorage.flush();
+});
 
 export const PersistedComposerImageAttachment = Schema.Struct({
   id: Schema.String,
