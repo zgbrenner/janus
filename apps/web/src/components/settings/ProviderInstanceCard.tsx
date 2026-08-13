@@ -24,6 +24,7 @@ import {
 } from "@t3tools/contracts";
 
 import { cn } from "../../lib/utils";
+import { openExternalUrl } from "../../lib/openExternalUrl";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import { normalizeProviderAccentColor } from "../../providerInstances";
 import { Badge } from "../ui/badge";
@@ -409,6 +410,7 @@ export function ProviderInstanceCard({
     ? (liveProvider?.auth.label ?? liveProvider?.auth.type ?? null)
     : null;
   const summary = rawSummary;
+  const summaryAction = summary.action;
   const versionLabel = getProviderVersionLabel(liveProvider?.version);
   const versionAdvisory = getProviderVersionAdvisoryPresentation(liveProvider?.versionAdvisory);
   const updateCommand = versionAdvisory?.updateCommand ?? null;
@@ -429,6 +431,25 @@ export function ProviderInstanceCard({
         stackedThreadToast({
           type: "error",
           title: `Could not copy ${providerName} update command`,
+          description: error.message,
+        }),
+      );
+    },
+  });
+  const { copyToClipboard: copySignInCommand } = useCopyToClipboard<{ providerName: string }>({
+    target: "sign-in command",
+    onCopy: ({ providerName }) => {
+      toastManager.add({
+        type: "success",
+        title: `${providerName} sign-in command copied`,
+        description: "Paste it into a terminal and follow the sign-in steps.",
+      });
+    },
+    onError: (error, { providerName }) => {
+      toastManager.add(
+        stackedThreadToast({
+          type: "error",
+          title: `Could not copy ${providerName} sign-in command`,
           description: error.message,
         }),
       );
@@ -578,10 +599,10 @@ export function ProviderInstanceCard({
   );
 
   const authRowNode = (
-    <p className="flex min-w-0 flex-wrap items-center gap-x-1 text-[13px] leading-[1.45] text-muted-foreground/80">
+    <p className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 text-[13px] leading-[1.45] text-muted-foreground/80">
       {hasAuthenticatedEmail ? (
         <>
-          <span>Authenticated as</span>
+          <span>Signed in as</span>
           <ProviderAuthEmail email={authEmail} />
           {authenticatedDetail ? <span>· {authenticatedDetail}</span> : null}
         </>
@@ -592,6 +613,25 @@ export function ProviderInstanceCard({
         </>
       )}
       {summary.detail ? <span>- {summary.detail}</span> : null}
+      {summaryAction?.kind === "sign-in" ? (
+        <button
+          type="button"
+          className="inline-flex cursor-pointer items-center gap-1 rounded border border-border/60 bg-foreground/4 px-1.5 py-0.5 font-mono text-xs text-foreground transition-colors hover:bg-foreground/8 focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={`Copy the ${displayName} sign-in command`}
+          onClick={() => copySignInCommand(summaryAction.command, { providerName: displayName })}
+        >
+          <code>{summaryAction.command}</code>
+          <CopyIcon aria-hidden className="size-3 shrink-0" />
+        </button>
+      ) : summaryAction?.kind === "install" ? (
+        <button
+          type="button"
+          className="cursor-pointer text-foreground underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground/80"
+          onClick={() => openExternalUrl(summaryAction.url, "Unable to open the install page")}
+        >
+          Get {displayName}
+        </button>
+      ) : null}
     </p>
   );
 

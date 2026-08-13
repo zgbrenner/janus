@@ -1,5 +1,6 @@
 import type { ServerProvider, ServerProviderVersionAdvisory } from "@t3tools/contracts";
 import { APP_BASE_NAME } from "~/branding";
+import { getProviderGuidance } from "~/providerGuidance";
 
 /**
  * Visual treatment for each server-reported provider status. Centralized so
@@ -22,20 +23,34 @@ export const PROVIDER_STATUS_STYLES = {
 
 export type ProviderStatusKey = keyof typeof PROVIDER_STATUS_STYLES;
 
+/** A concrete fix the UI can offer next to a provider problem: a sign-in
+    command to copy into a terminal, or the page where the CLI is installed. */
+export type ProviderSummaryAction =
+  | { readonly kind: "sign-in"; readonly command: string }
+  | { readonly kind: "install"; readonly url: string };
+
+export interface ProviderSummary {
+  readonly headline: string;
+  readonly detail: string | null;
+  readonly action?: ProviderSummaryAction;
+}
+
 /**
  * Derive the headline + detail copy shown under a provider's name in the
  * settings page. Prefers `provider.message` for server-supplied detail and
  * falls back to generic phrasing when the server has not yet reported any
  * state — which happens before the first probe or when an instance names a
- * driver this build does not ship.
+ * driver this build does not ship. When the fix is known (install the CLI,
+ * run its login command), `action` carries it in structured form.
  */
-export function getProviderSummary(provider: ServerProvider | undefined) {
+export function getProviderSummary(provider: ServerProvider | undefined): ProviderSummary {
   if (!provider) {
     return {
       headline: "Checking provider status",
       detail: "Waiting for the server to report installation and authentication details.",
     };
   }
+  const guidance = getProviderGuidance(provider.driver);
   if (!provider.enabled) {
     return {
       headline: "Disabled",
@@ -46,21 +61,29 @@ export function getProviderSummary(provider: ServerProvider | undefined) {
   }
   if (!provider.installed) {
     return {
-      headline: "Not found",
-      detail: provider.message ?? "CLI not detected on PATH.",
+      headline: "Not installed",
+      detail:
+        provider.message ??
+        `${APP_BASE_NAME} can't find this provider's app on this computer. Install it, then restart ${APP_BASE_NAME}.`,
+      ...(guidance ? { action: { kind: "install", url: guidance.installUrl } } : {}),
     };
   }
   if (provider.auth.status === "authenticated") {
     const authLabel = provider.auth.label ?? provider.auth.type;
     return {
-      headline: authLabel ? `Authenticated · ${authLabel}` : "Authenticated",
+      headline: authLabel ? `Signed in · ${authLabel}` : "Signed in",
       detail: provider.message ?? null,
     };
   }
   if (provider.auth.status === "unauthenticated") {
     return {
-      headline: "Not authenticated",
-      detail: provider.message ?? null,
+      headline: "Not signed in",
+      detail:
+        provider.message ??
+        (guidance
+          ? "Open a terminal, run the sign-in command, and follow its steps."
+          : "Sign in with the provider's terminal app, then try again."),
+      ...(guidance ? { action: { kind: "sign-in", command: guidance.loginCommand } } : {}),
     };
   }
   if (provider.status === "warning") {
