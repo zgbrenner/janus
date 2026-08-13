@@ -1,10 +1,10 @@
 # Source Control Integrations
 
-T3 Code connects to your Git hosting provider so you can create pull requests, review code, and manage repositories without leaving the app.
+Janus connects to your Git hosting provider so you can create pull requests, review code, and manage repositories without leaving the app.
 
 ## Supported Providers
 
-T3 Code works with the platforms your team already uses:
+Janus works with the platforms your team already uses:
 
 - **GitHub** – Pull requests, repository creation, and clone integration
 - **GitLab** – Merge requests, repository publishing, and hosted clones
@@ -17,14 +17,14 @@ T3 Code works with the platforms your team already uses:
 
 **Clone repositories directly**
 
-- Open the Command Palette (`Cmd/Ctrl + K`) → **Add Project**
+- Open the Command Palette (`Cmd/Ctrl + K`) → **Add workspace**
 - Choose **GitHub repository**, **GitLab repository**, **Bitbucket repository**, **Azure DevOps repository**, or paste any **Git URL**
 - Enter the repository path (`owner/repo`, `group/project`, `workspace/repository`, or `project/repository`) or a full Git URL, pick a destination, and start coding
 
-**Publish local projects to the cloud**
+**Publish local repositories to a hosting provider**
 
 - Have a local Git repository without a remote?
-- Use the **Publish Repository** action to create a new hosted repository (GitHub, GitLab, Bitbucket, or Azure DevOps), add it as your origin remote, and push, in one flow
+- Use the **Publish repository** action to create a new hosted repository (GitHub, GitLab, Bitbucket, or Azure DevOps), add it as your origin remote, and push, in one flow
 - If the local repository has no commits yet, publishing creates the remote and wires it up but does not push. Make a commit, then push normally.
 
 ### Manage Code Reviews Without Context Switching
@@ -32,21 +32,21 @@ T3 Code works with the platforms your team already uses:
 **Create pull requests while you work**
 
 - Push a branch and create a pull request from the Git actions controls in the toolbar
-- T3 Code can suggest titles and descriptions based on your commits
+- Janus can suggest titles and descriptions based on your commits
 - Supports GitHub Pull Requests, GitLab Merge Requests, Bitbucket Pull Requests, and Azure DevOps Pull Requests
 
 **Stay on top of open reviews**
 
 - See if your current branch already has an open PR/MR
 - Open several reviews from the **Pull requests** page as tabs in the right panel
-- While working in a thread, open linked reviews in the same compact right-panel tabs without
+- While working in a task, open linked reviews in the same compact right-panel tabs without
   leaving the conversation
 - Open the review directly in your browser with one click
 - Check out a teammate's branch to review code locally
 
 ### Know Your Setup at a Glance
 
-The **Source Control settings** page shows you exactly what's connected:
+The **Source control** settings page shows you exactly what's connected:
 
 - ✅ Which providers are authenticated and ready
 - ⚠️ What's missing and how to fix it
@@ -58,7 +58,7 @@ Run a quick **Rescan** after setting up a new machine or changing credentials.
 
 ### For GitHub (Recommended for most users)
 
-1. Install the GitHub CLI on the machine running T3 Code:
+1. Install the GitHub CLI on the machine running Janus:
    ```bash
    brew install gh
    ```
@@ -66,7 +66,7 @@ Run a quick **Rescan** after setting up a new machine or changing credentials.
    ```bash
    gh auth login
    ```
-3. Open **Settings → Source Control** in T3 Code and verify GitHub shows as authenticated
+3. Open **Settings → Source control** in Janus and verify GitHub shows as authenticated
 
 You can now clone, publish, and create pull requests.
 
@@ -80,12 +80,12 @@ You can now clone, publish, and create pull requests.
    ```bash
    glab auth login
    ```
-3. Check **Settings → Source Control** to confirm the connection
+3. Check **Settings → Source control** to confirm the connection
 
 ### For Bitbucket
 
 Bitbucket uses tokens instead of a CLI tool. Two options, both set as environment variables on the
-machine running T3 Code.
+machine running Janus.
 
 Recommended, a Bitbucket access token:
 
@@ -101,8 +101,8 @@ export T3CODE_BITBUCKET_EMAIL="you@example.com"
 export T3CODE_BITBUCKET_API_TOKEN="your-token"
 ```
 
-If both are set, the access token wins. Restart T3 Code and verify the connection in **Source
-Control settings**.
+If both are set, the access token wins. Restart Janus and verify the connection in **Source
+control** settings.
 
 ### For Azure DevOps
 
@@ -123,13 +123,13 @@ Control settings**.
 
 ## Requirements & Troubleshooting
 
-**Git is required** – T3 Code uses Git for all local operations. Ensure `git` is installed on your server.
+**Git is required** – Janus uses Git for all local operations. Ensure `git` is installed on the machine running the Janus server.
 
-**Server-side setup** – Authentication happens on the machine running T3 Code (the server), not your local browser. If you're using a hosted or team instance, your administrator may have already configured providers.
+**Server-side setup** – Authentication happens on the machine running the Janus server, not on the device you are browsing from. For a remote environment, run the login commands on that remote machine.
 
 **Common issues:**
 
-- **Provider shows "Not authenticated"** – Run the login command for that provider (e.g., `gh auth login`) in a terminal on the server, then rescan in Settings
+- **Provider shows "Not authenticated"** – Run the login command for that provider (e.g., `gh auth login`) in a terminal on the server machine, then rescan in Settings
 - **Bitbucket not connecting** – Double-check your environment variables are set in the correct shell profile and the server was restarted
 - **Can't push to a remote** – Verify your Git remote URL matches the provider you've authenticated with (SSH vs HTTPS remotes may need different credentials)
 
