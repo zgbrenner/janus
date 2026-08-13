@@ -44,24 +44,68 @@ export function createDebouncedStorage(
   debounceMs: number = 300,
 ): DebouncedStorage {
   const resolvedStorage = resolveStorage(baseStorage);
-  const debouncedSetItem = new Debouncer(
-    (name: string, value: string) => {
-      resolvedStorage.setItem(name, value);
-    },
-    { wait: debounceMs },
-  );
+  const pendingWrites = new Map<string, string>();
+
+  const writePending = () => {
+    for (const [name, value] of pendingWrites) {
+      pendingWrites.delete(name);
+      try {
+        resolvedStorage.setItem(name, value);
+      } catch (error) {
+        // A quota or disabled-storage error thrown here would escape as an
+        // uncaught exception from the debounce timer; the value simply stays
+        // unpersisted, and other pending keys still get their write.
+        console.error(`Could not persist "${name}" to storage.`, error);
+      }
+    }
+  };
+
+  const debouncedWrite = new Debouncer(writePending, { wait: debounceMs });
 
   return {
-    getItem: (name) => resolvedStorage.getItem(name),
+    // Serve the pending value so reads inside the debounce window are not stale.
+    getItem: (name) => pendingWrites.get(name) ?? resolvedStorage.getItem(name),
     setItem: (name, value) => {
-      debouncedSetItem.maybeExecute(name, value);
+      pendingWrites.set(name, value);
+      debouncedWrite.maybeExecute();
     },
     removeItem: (name) => {
-      debouncedSetItem.cancel();
+      pendingWrites.delete(name);
       resolvedStorage.removeItem(name);
     },
     flush: () => {
-      debouncedSetItem.flush();
+      debouncedWrite.cancel();
+      writePending();
     },
   };
+}
+
+interface FlushEventTarget {
+  addEventListener(type: string, listener: () => void): void;
+}
+
+interface FlushVisibilityTarget extends FlushEventTarget {
+  readonly visibilityState?: string;
+}
+
+/** Flush pending writes whenever the page may be going away. `beforeunload`
+    alone is not enough: mobile browsers skip it, and a tab entering bfcache or
+    being discarded under memory pressure only gets `pagehide` or a
+    `visibilitychange` to hidden. */
+export function flushOnPageExit(
+  flush: () => void,
+  win: FlushEventTarget | undefined = typeof window === "undefined" ? undefined : window,
+  doc: FlushVisibilityTarget | undefined = typeof document === "undefined" ? undefined : document,
+): void {
+  if (win && typeof win.addEventListener === "function") {
+    win.addEventListener("beforeunload", flush);
+    win.addEventListener("pagehide", flush);
+  }
+  if (doc && typeof doc.addEventListener === "function") {
+    doc.addEventListener("visibilitychange", () => {
+      if (doc.visibilityState === "hidden") {
+        flush();
+      }
+    });
+  }
 }

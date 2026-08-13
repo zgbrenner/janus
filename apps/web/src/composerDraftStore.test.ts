@@ -75,7 +75,7 @@ import {
   insertInlineTerminalContextPlaceholder,
   type TerminalContextDraft,
 } from "./lib/terminalContext";
-import { createDebouncedStorage } from "./lib/storage";
+import { createDebouncedStorage, flushOnPageExit } from "./lib/storage";
 
 function makeImage(input: {
   id: string;
@@ -1802,5 +1802,116 @@ describe("createDebouncedStorage", () => {
     vi.advanceTimersByTime(300);
     expect(base.setItem).toHaveBeenCalledTimes(1);
     expect(base.setItem).toHaveBeenCalledWith("key", "v2");
+  });
+
+  it("persists writes to every pending key, not only the last one", () => {
+    const base = createMockStorage();
+    const storage = createDebouncedStorage(base);
+
+    storage.setItem("a", "v1");
+    storage.setItem("b", "v2");
+
+    vi.advanceTimersByTime(300);
+    expect(base.setItem).toHaveBeenCalledWith("a", "v1");
+    expect(base.setItem).toHaveBeenCalledWith("b", "v2");
+  });
+
+  it("removeItem cancels only its own key's pending write", () => {
+    const base = createMockStorage();
+    const storage = createDebouncedStorage(base);
+
+    storage.setItem("a", "v1");
+    storage.setItem("b", "v2");
+    storage.removeItem("b");
+
+    vi.advanceTimersByTime(300);
+    expect(base.setItem).toHaveBeenCalledTimes(1);
+    expect(base.setItem).toHaveBeenCalledWith("a", "v1");
+    expect(base.removeItem).toHaveBeenCalledWith("b");
+  });
+
+  it("serves the pending value from getItem before the write lands", () => {
+    const base = createMockStorage();
+    const storage = createDebouncedStorage(base);
+
+    storage.setItem("key", "pending");
+    expect(storage.getItem("key")).toBe("pending");
+
+    vi.advanceTimersByTime(300);
+    expect(storage.getItem("key")).toBe("pending");
+    expect(base.setItem).toHaveBeenCalledWith("key", "pending");
+  });
+
+  it("contains a quota error instead of throwing from the debounce timer", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const base = createMockStorage();
+      base.setItem.mockImplementation((name: string) => {
+        if (name === "full") {
+          throw new DOMException("quota exceeded", "QuotaExceededError");
+        }
+      });
+      const storage = createDebouncedStorage(base);
+
+      storage.setItem("full", "big");
+      storage.setItem("ok", "small");
+
+      expect(() => vi.advanceTimersByTime(300)).not.toThrow();
+      expect(base.setItem).toHaveBeenCalledWith("ok", "small");
+      expect(consoleError).toHaveBeenCalledTimes(1);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+});
+
+describe("flushOnPageExit", () => {
+  function createExitTargets(visibilityState = "hidden") {
+    const windowListeners = new Map<string, () => void>();
+    const documentListeners = new Map<string, () => void>();
+    return {
+      win: {
+        addEventListener: (type: string, listener: () => void) => {
+          windowListeners.set(type, listener);
+        },
+      },
+      doc: {
+        visibilityState,
+        addEventListener: (type: string, listener: () => void) => {
+          documentListeners.set(type, listener);
+        },
+      },
+      fire: (type: string) => {
+        (windowListeners.get(type) ?? documentListeners.get(type))?.();
+      },
+    };
+  }
+
+  it("flushes on beforeunload and pagehide", () => {
+    const flush = vi.fn();
+    const targets = createExitTargets();
+    flushOnPageExit(flush, targets.win, targets.doc);
+
+    targets.fire("beforeunload");
+    targets.fire("pagehide");
+    expect(flush).toHaveBeenCalledTimes(2);
+  });
+
+  it("flushes when the document becomes hidden, but not while visible", () => {
+    const flush = vi.fn();
+    const hidden = createExitTargets("hidden");
+    flushOnPageExit(flush, hidden.win, hidden.doc);
+    hidden.fire("visibilitychange");
+    expect(flush).toHaveBeenCalledTimes(1);
+
+    const visible = createExitTargets("visible");
+    const visibleFlush = vi.fn();
+    flushOnPageExit(visibleFlush, visible.win, visible.doc);
+    visible.fire("visibilitychange");
+    expect(visibleFlush).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op without window or document", () => {
+    expect(() => flushOnPageExit(vi.fn(), undefined, undefined)).not.toThrow();
   });
 });
