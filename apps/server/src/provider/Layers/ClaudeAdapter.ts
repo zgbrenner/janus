@@ -3849,8 +3849,16 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
           once: true,
         });
 
-        // Block until the user provides answers.
-        const answers = yield* Deferred.await(answersDeferred);
+        // Block until the user provides answers. The signal is query-scoped
+        // and outlives this request, so drop the listener once resolved —
+        // `once` only self-removes when the abort actually fires.
+        const answers = yield* Deferred.await(answersDeferred).pipe(
+          Effect.ensuring(
+            Effect.sync(() => {
+              callbackOptions.signal.removeEventListener("abort", onAbort);
+            }),
+          ),
+        );
         pendingUserInputs.delete(requestId);
 
         // Emit user-input.resolved so the UI knows the interaction completed.
@@ -4002,7 +4010,17 @@ export const makeClaudeAdapter = Effect.fn("makeClaudeAdapter")(function* (
           once: true,
         });
 
-        const decision = yield* Deferred.await(decisionDeferred);
+        // The signal is query-scoped and outlives this approval, so drop the
+        // listener once resolved — `once` only self-removes when the abort
+        // actually fires, and long sessions accumulate one closure per
+        // approval otherwise.
+        const decision = yield* Deferred.await(decisionDeferred).pipe(
+          Effect.ensuring(
+            Effect.sync(() => {
+              callbackOptions.signal.removeEventListener("abort", onAbort);
+            }),
+          ),
+        );
         pendingApprovals.delete(requestId);
 
         const resolvedStamp = yield* makeEventStamp();
