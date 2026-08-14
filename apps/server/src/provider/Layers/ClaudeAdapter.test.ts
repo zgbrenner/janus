@@ -1,5 +1,5 @@
 // @effect-diagnostics nodeBuiltinImport:off
-import { getEventListeners } from "node:events";
+import * as NodeEvents from "node:events";
 import * as NodeFS from "node:fs";
 import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
@@ -4337,7 +4337,7 @@ describe("ClaudeAdapterLive", () => {
       yield* Stream.runHead(adapter.streamEvents);
       yield* Effect.promise(() => askPromise);
 
-      assert.equal(getEventListeners(controller.signal, "abort").length, 0);
+      assert.equal(NodeEvents.EventEmitter.getEventListeners(controller.signal, "abort").length, 0);
     }).pipe(
       Effect.provideService(Random.Random, makeDeterministicRandomService()),
       Effect.provide(harness.layer),
