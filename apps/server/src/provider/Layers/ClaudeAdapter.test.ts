@@ -1,4 +1,5 @@
 // @effect-diagnostics nodeBuiltinImport:off
+import * as NodeEvents from "node:events";
 import * as NodeFS from "node:fs";
 import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
@@ -4259,6 +4260,84 @@ describe("ClaudeAdapterLive", () => {
         behavior: "deny",
         message: "User cancelled tool execution.",
       } satisfies PermissionResult);
+    }).pipe(
+      Effect.provideService(Random.Random, makeDeterministicRandomService()),
+      Effect.provide(harness.layer),
+    );
+  });
+
+  // The SDK hands every request in a query the same abort signal, so a
+  // listener left behind after a normal resolution accumulates per approval.
+  it.effect("removes abort listeners from the shared signal once requests resolve", () => {
+    const harness = makeHarness();
+    return Effect.gen(function* () {
+      const adapter = yield* ClaudeAdapter;
+
+      const session = yield* adapter.startSession({
+        threadId: THREAD_ID,
+        provider: ProviderDriverKind.make("claudeAgent"),
+        runtimeMode: "approval-required",
+      });
+
+      yield* Stream.take(adapter.streamEvents, 3).pipe(Stream.runDrain);
+
+      const createInput = harness.getLastCreateQueryInput();
+      const canUseTool = createInput?.options.canUseTool;
+      assert.equal(typeof canUseTool, "function");
+      if (!canUseTool) {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      const approvalPromise = canUseTool(
+        "Bash",
+        { command: "pwd" },
+        { signal: controller.signal, toolUseID: "tool-listener-1" },
+      );
+      const requested = yield* Stream.runHead(adapter.streamEvents);
+      assert.equal(requested._tag, "Some");
+      if (requested._tag !== "Some" || requested.value.type !== "request.opened") {
+        assert.fail("Expected request.opened event");
+        return;
+      }
+      yield* adapter.respondToRequest(
+        session.threadId,
+        ApprovalRequestId.make(requested.value.requestId!),
+        "accept",
+      );
+      yield* Stream.runHead(adapter.streamEvents);
+      yield* Effect.promise(() => approvalPromise);
+
+      const askPromise = canUseTool(
+        "AskUserQuestion",
+        {
+          questions: [
+            {
+              question: "Continue?",
+              header: "Continue",
+              options: [{ label: "Yes", description: "Proceed" }],
+              multiSelect: false,
+            },
+          ],
+        },
+        { signal: controller.signal, toolUseID: "tool-listener-2" },
+      );
+      const inputRequested = yield* Stream.runHead(adapter.streamEvents);
+      assert.equal(inputRequested._tag, "Some");
+      if (inputRequested._tag !== "Some" || inputRequested.value.type !== "user-input.requested") {
+        assert.fail("Expected user-input.requested event");
+        return;
+      }
+      yield* adapter.respondToUserInput(
+        session.threadId,
+        ApprovalRequestId.make(inputRequested.value.requestId!),
+        { "Continue?": "Yes" },
+      );
+      yield* Stream.runHead(adapter.streamEvents);
+      yield* Effect.promise(() => askPromise);
+
+      assert.equal(NodeEvents.EventEmitter.getEventListeners(controller.signal, "abort").length, 0);
     }).pipe(
       Effect.provideService(Random.Random, makeDeterministicRandomService()),
       Effect.provide(harness.layer),
