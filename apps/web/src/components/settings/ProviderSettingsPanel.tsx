@@ -3,6 +3,7 @@ import { connectionStatusText } from "@t3tools/client-runtime/connection";
 import { safeErrorLogAttributes } from "@t3tools/client-runtime/errors";
 import {
   isAtomCommandInterrupted,
+  settlePromise,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import {
@@ -70,6 +71,7 @@ import {
 } from "../ui/number-field";
 import { stackedThreadToast, toastManager } from "../ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { readLocalApi } from "~/localApi";
 import { AddProviderInstanceDialog } from "./AddProviderInstanceDialog";
 import { ProviderInstanceCard } from "./ProviderInstanceCard";
 import { DRIVER_OPTIONS, getDriverOption } from "./providerDriverMeta";
@@ -589,9 +591,29 @@ export function EnvironmentProviderSettings({
     );
   };
 
-  const deleteProviderInstance = (id: ProviderInstanceId) => {
+  // Deleting a custom instance throws away configuration the user typed in by
+  // hand — re-adding it means walking the whole add-provider flow again — so it
+  // confirms first, like removing a workspace or a project script does.
+  const deleteProviderInstance = async (row: InstanceRow) => {
+    const api = readLocalApi();
+    if (!api) return;
+    const label =
+      row.instance.displayName?.trim() || getDriverOption(row.driver)?.label || String(row.driver);
+    // settlePromise so a rejected dialog cannot escape as an unhandled
+    // rejection from the void-ed click handler.
+    const confirmed = await settlePromise(() =>
+      api.dialogs.confirm(
+        [
+          `Delete provider "${label}"?`,
+          "Its settings on this device, including anything you entered for it, are removed.",
+          "This action cannot be undone.",
+        ].join("\n"),
+        { variant: "destructive" },
+      ),
+    );
+    if (confirmed._tag === "Failure" || !confirmed.value) return;
     updateSettings({
-      providerInstances: withoutProviderInstanceKey(settings.providerInstances, id),
+      providerInstances: withoutProviderInstanceKey(settings.providerInstances, row.instanceId),
     });
   };
 
@@ -852,7 +874,7 @@ export function EnvironmentProviderSettings({
                     updateProviderInstance(row, next);
                   }
                 }}
-                onDelete={row.isDefault ? undefined : () => deleteProviderInstance(row.instanceId)}
+                onDelete={row.isDefault ? undefined : () => void deleteProviderInstance(row)}
                 headerAction={headerAction}
                 hiddenModels={modelPreferences.hiddenModels}
                 favoriteModels={favoriteModels}

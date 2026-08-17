@@ -24,6 +24,10 @@ const commands = vi.hoisted(() => ({
   updateProvider: vi.fn(),
 }));
 
+const localApi = vi.hoisted(() => ({
+  confirm: vi.fn(),
+}));
+
 const settingsState = vi.hoisted(() => ({
   value: null as UnifiedSettings | null,
   readEnvironmentIds: [] as EnvironmentId[],
@@ -75,6 +79,10 @@ vi.mock("../../hooks/useSettings", () => ({
     settingsState.updateEnvironmentIds.push(environmentId);
     return settingsState.updateSettings;
   },
+}));
+
+vi.mock("~/localApi", () => ({
+  readLocalApi: () => ({ dialogs: { confirm: localApi.confirm } }),
 }));
 
 vi.mock("../../environments/primary", () => ({
@@ -140,6 +148,7 @@ describe("EnvironmentProviderSettings routing", () => {
     settingsState.readEnvironmentIds = [];
     settingsState.updateEnvironmentIds = [];
     settingsState.updateSettings.mockReset();
+    localApi.confirm.mockReset().mockResolvedValue(true);
     commands.refresh.mockReset().mockResolvedValue({ _tag: "Success" });
     commands.updateProvider.mockReset().mockResolvedValue({ _tag: "Success" });
   });
@@ -207,7 +216,33 @@ describe("EnvironmentProviderSettings routing", () => {
     ).toBeNull();
   });
 
-  it("deletes and resets provider configuration without erasing shared preferences", () => {
+  // Deleting a custom instance discards configuration the user typed in by
+  // hand, and the panel confirms for workspaces and scripts already.
+  it("keeps the provider when the delete confirmation is declined", async () => {
+    localApi.confirm.mockResolvedValue(false);
+    settingsState.value = {
+      ...DEFAULT_UNIFIED_SETTINGS,
+      providerInstances: {
+        [customId]: {
+          driver: ProviderDriverKind.make("codex"),
+          enabled: true,
+          displayName: "Work Codex",
+        },
+      },
+    };
+
+    const panel = renderPanel();
+    const customCard = visitElements(panel, (element) => element.props.instanceId === customId);
+    (customCard?.props.onDelete as (() => void) | undefined)?.();
+    await flushPromises();
+
+    expect(localApi.confirm).toHaveBeenCalledTimes(1);
+    // The prompt names the instance so the row being removed is unambiguous.
+    expect(String(localApi.confirm.mock.calls[0]?.[0])).toContain('Delete provider "Work Codex"?');
+    expect(settingsState.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it("deletes and resets provider configuration without erasing shared preferences", async () => {
     settingsState.value = {
       ...DEFAULT_UNIFIED_SETTINGS,
       providerInstances: {
@@ -229,7 +264,9 @@ describe("EnvironmentProviderSettings routing", () => {
     const customCard = visitElements(panel, (element) => element.props.instanceId === customId);
     expect(customCard).not.toBeNull();
     (customCard?.props.onDelete as (() => void) | undefined)?.();
+    await flushPromises();
 
+    expect(localApi.confirm).toHaveBeenCalledTimes(1);
     expect(settingsState.updateSettings).toHaveBeenLastCalledWith({
       providerInstances: {
         [codexId]: settingsState.value.providerInstances?.[codexId],
