@@ -1864,6 +1864,7 @@ export default function GitActionsControl({
                   <div className="flex items-center gap-2">
                     {isEditingFiles && allFiles.length > 0 && (
                       <Checkbox
+                        aria-label="Include all files in commit"
                         checked={allSelected}
                         indeterminate={!allSelected && !noneSelected}
                         onCheckedChange={() => {
@@ -1905,6 +1906,7 @@ export default function GitActionsControl({
                             >
                               {isEditingFiles && (
                                 <Checkbox
+                                  aria-label={`Include ${file.path} in commit`}
                                   checked={!excludedFiles.has(file.path)}
                                   onCheckedChange={() => {
                                     setExcludedFiles((prev) => {

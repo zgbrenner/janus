@@ -1758,6 +1758,11 @@ function ComposerPromptEditorInner({
                 className,
               )}
               data-testid="composer-editor"
+              // Lexical renders this as role="textbox", and a placeholder is a
+              // hint rather than a name — without these the app's primary input
+              // is announced as an unnamed single-line field.
+              aria-label="Message"
+              aria-multiline="true"
               aria-placeholder={placeholder}
               placeholder={<span />}
               onPaste={onPaste}
