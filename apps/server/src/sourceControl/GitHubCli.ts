@@ -292,7 +292,11 @@ function deriveRepositoryCloneUrlsFromCreateOutput(
         return {
           nameWithOwner,
           url: `${parsed.origin}/${nameWithOwner}`,
-          sshUrl: `git@${parsed.host}:${nameWithOwner}.git`,
+          // `hostname`, not `host`: the scp-style form has no place for a
+          // port, so carrying one through would yield an address git cannot
+          // parse (`git@host:8443:owner/repo.git`). SSH reaches an
+          // Enterprise host on its own port, not the HTTPS one.
+          sshUrl: `git@${parsed.hostname}:${nameWithOwner}.git`,
         };
       }
     } catch {
