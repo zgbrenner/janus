@@ -325,6 +325,33 @@ describe("GitHubCli.layer", () => {
     }).pipe(Effect.provide(layer)),
   );
 
+  it.effect("keeps the port out of the SSH URL for an Enterprise host", () =>
+    Effect.gen(function* () {
+      mockRun.mockReturnValueOnce(
+        Effect.succeed(
+          processOutput(
+            "✓ Created repository octocat/codething-mvp on ghe.example.com\nhttps://ghe.example.com:8443/octocat/codething-mvp\n",
+          ),
+        ),
+      );
+
+      const gh = yield* GitHubCli.GitHubCli;
+      const result = yield* gh.createRepository({
+        cwd: "/repo",
+        repository: "octocat/codething-mvp",
+        visibility: "private",
+      });
+
+      // The scp-style form has no port field, so a port here would make the
+      // address unparseable for git.
+      assert.deepStrictEqual(result, {
+        nameWithOwner: "octocat/codething-mvp",
+        url: "https://ghe.example.com:8443/octocat/codething-mvp",
+        sshUrl: "git@ghe.example.com:octocat/codething-mvp.git",
+      });
+    }).pipe(Effect.provide(layer)),
+  );
+
   it.effect("falls back to constructed URLs when create output omits a URL", () =>
     Effect.gen(function* () {
       mockRun.mockReturnValueOnce(Effect.succeed(processOutput("")));
