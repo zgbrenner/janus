@@ -152,6 +152,53 @@ describe("Janus command palette vocabulary", () => {
       expect(groups[0]?.items.map((item) => item.value)).toEqual([expected]);
     }
   });
+
+  // These two pages live only in the sidebar footer, which collapses, so the
+  // palette is the way back to them — worth pinning that the terms a user
+  // would actually type reach them.
+  it("finds the footer destinations the sidebar hides when collapsed", () => {
+    const actions: CommandPaletteGroup = {
+      value: "actions",
+      label: "Actions",
+      items: [
+        {
+          kind: "action",
+          value: "action:pull-requests",
+          searchTerms: ["pull requests", "prs", "reviews", "merge", "change requests"],
+          title: "Open pull requests",
+          icon: null,
+          run: async () => undefined,
+        },
+        {
+          kind: "action",
+          value: "action:usage",
+          searchTerms: ["usage", "tokens", "cost", "spend", "limits"],
+          title: "Open usage",
+          icon: null,
+          run: async () => undefined,
+        },
+      ],
+    };
+
+    for (const [query, expected] of [
+      ["pull requests", "action:pull-requests"],
+      ["prs", "action:pull-requests"],
+      ["reviews", "action:pull-requests"],
+      ["usage", "action:usage"],
+      ["cost", "action:usage"],
+      ["tokens", "action:usage"],
+    ] as const) {
+      const groups = filterCommandPaletteGroups({
+        activeGroups: [actions],
+        query,
+        isInSubmenu: false,
+        projectSearchItems: [],
+        threadSearchItems: [],
+      });
+
+      expect(groups[0]?.items.map((item) => item.value)).toEqual([expected]);
+    }
+  });
 });
 
 const LOCAL_ENVIRONMENT_ID = EnvironmentId.make("environment-local");

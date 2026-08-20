@@ -37,6 +37,8 @@ import {
   MessageSquareIcon,
   PaletteIcon,
   SettingsIcon,
+  GitPullRequestIcon,
+  ChartNoAxesColumnIcon,
   SquarePenIcon,
   TextSearchIcon,
 } from "lucide-react";
@@ -67,7 +69,11 @@ import { useEnvironmentQuery } from "../state/query";
 import { sourceControlEnvironment } from "../state/sourceControl";
 import { useAtomCommand } from "../state/use-atom-command";
 import { useAtomQueryRunner } from "../state/use-atom-query-runner";
-import { useEnvironments, usePrimaryEnvironmentId } from "../state/environments";
+import {
+  useEnvironments,
+  usePrimaryEnvironment,
+  usePrimaryEnvironmentId,
+} from "../state/environments";
 import { useProjects, useThreadShells } from "../state/entities";
 import { useThreadSearch } from "../state/queries";
 import { resolveThreadActionProjectRef, startNewThreadFromContext } from "../lib/chatThreadActions";
@@ -578,6 +584,9 @@ function OpenCommandPaletteDialog(props: {
   const { environments } = useEnvironments();
   const desktopLocalBootstraps = useDesktopLocalBootstraps();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
+  const primaryEnvironment = usePrimaryEnvironment();
+  const pullRequestsSupported =
+    primaryEnvironment?.serverConfig?.environment.capabilities.pullRequests === true;
   const { activeDraftThread, activeThread, defaultProjectRef, handleNewThread } =
     useHandleNewThread();
   const projects = useProjects();
@@ -1525,6 +1534,32 @@ function OpenCommandPaletteDialog(props: {
     icon: <SettingsIcon className={ITEM_ICON_CLASS} />,
     run: async () => {
       await navigate({ to: "/settings" });
+    },
+  });
+
+  // The sidebar footer carries these beside Settings, but the sidebar can be
+  // collapsed, which left both pages with no other way in.
+  if (pullRequestsSupported) {
+    actionItems.push({
+      kind: "action",
+      value: "action:pull-requests",
+      searchTerms: ["pull requests", "prs", "reviews", "merge", "change requests"],
+      title: "Open pull requests",
+      icon: <GitPullRequestIcon className={ITEM_ICON_CLASS} />,
+      run: async () => {
+        await navigate({ to: "/pull-requests", search: { involvement: "all", state: "open" } });
+      },
+    });
+  }
+
+  actionItems.push({
+    kind: "action",
+    value: "action:usage",
+    searchTerms: ["usage", "tokens", "cost", "spend", "limits"],
+    title: "Open usage",
+    icon: <ChartNoAxesColumnIcon className={ITEM_ICON_CLASS} />,
+    run: async () => {
+      await navigate({ to: "/usage" });
     },
   });
 
