@@ -2,6 +2,7 @@ import type { ContextMenuItem, PreviewSessionSnapshot, PullRequestState } from "
 import { getTerminalLabel } from "@t3tools/shared/terminalLabels";
 import { APP_BASE_NAME } from "~/branding";
 import {
+  BookOpen,
   Bot,
   FileDiff,
   Files,
@@ -60,12 +61,14 @@ interface RightPanelTabsProps {
   onAddFiles: () => void;
   onAddPullRequest: () => void;
   onAddAgents: () => void;
+  onAddKnowledge: () => void;
   browserAvailable: boolean;
   terminalAvailable: boolean;
   diffAvailable: boolean;
   filesAvailable: boolean;
   pullRequestAvailable: boolean;
   agentsAvailable: boolean;
+  knowledgeAvailable: boolean;
   pullRequestStatuses?: Readonly<Record<string, PullRequestTabStatus>>;
   /** Running + waiting subagents; badges the Agents card in the empty state. */
   liveAgentCount: number;
@@ -87,6 +90,7 @@ const SURFACE_DISABLED_REASONS = {
   diff: "Diff is only available for tasks in Git repositories.",
   pullRequest: "This task's branch has no pull request yet.",
   agents: "Agents are only available from a task.",
+  knowledge: "Knowledge base is only available within a workspace.",
 } as const;
 
 type TabContextMenuAction = "copy-path" | "close" | "close-others" | "close-to-right" | "close-all";
@@ -126,12 +130,14 @@ function RightPanelEmptyState(props: {
   onAddFiles: () => void;
   onAddPullRequest: () => void;
   onAddAgents: () => void;
+  onAddKnowledge: () => void;
   browserAvailable: boolean;
   terminalAvailable: boolean;
   diffAvailable: boolean;
   filesAvailable: boolean;
   pullRequestAvailable: boolean;
   agentsAvailable: boolean;
+  knowledgeAvailable: boolean;
   liveAgentCount: number;
 }) {
   const actions = [
@@ -188,6 +194,15 @@ function RightPanelEmptyState(props: {
       disabledReason: SURFACE_DISABLED_REASONS.agents,
       onClick: props.onAddAgents,
       badgeCount: props.liveAgentCount,
+    },
+    {
+      label: "Knowledge",
+      description: "Manage project knowledge and notes.",
+      icon: BookOpen,
+      available: props.knowledgeAvailable,
+      disabledReason: SURFACE_DISABLED_REASONS.knowledge,
+      onClick: props.onAddKnowledge,
+      badgeCount: 0,
     },
   ] as const;
 
@@ -278,6 +293,8 @@ function surfaceTitle(
       return `#${surface.number}`;
     case "agents":
       return "Agents";
+    case "knowledge":
+      return "Knowledge";
     case "preview": {
       const snapshot = surface.resourceId ? sessions[surface.resourceId] : null;
       if (!snapshot || snapshot.navStatus._tag === "Idle") return "Browser";
@@ -355,6 +372,8 @@ function SurfaceIcon({
     }
     case "agents":
       return <Bot className="size-3 shrink-0" />;
+    case "knowledge":
+      return <BookOpen className="size-3 shrink-0" />;
   }
 }
 
@@ -578,6 +597,14 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
                     <Bot />
                     Agents
                   </SurfaceMenuItem>
+                  <SurfaceMenuItem
+                    available={props.knowledgeAvailable}
+                    disabledReason={SURFACE_DISABLED_REASONS.knowledge}
+                    onClick={props.onAddKnowledge}
+                  >
+                    <BookOpen />
+                    Knowledge
+                  </SurfaceMenuItem>
                 </MenuPopup>
               </Menu>
             ) : null}
@@ -594,12 +621,14 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
             onAddFiles={props.onAddFiles}
             onAddPullRequest={props.onAddPullRequest}
             onAddAgents={props.onAddAgents}
+            onAddKnowledge={props.onAddKnowledge}
             browserAvailable={props.browserAvailable}
             terminalAvailable={props.terminalAvailable}
             diffAvailable={props.diffAvailable}
             filesAvailable={props.filesAvailable}
             pullRequestAvailable={props.pullRequestAvailable}
             agentsAvailable={props.agentsAvailable}
+            knowledgeAvailable={props.knowledgeAvailable}
             liveAgentCount={props.liveAgentCount}
           />
         ) : (

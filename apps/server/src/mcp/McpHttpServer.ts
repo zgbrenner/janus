@@ -22,6 +22,8 @@ import {
   PreviewSnapshotToolkit,
   PreviewStandardToolkit,
 } from "./toolkits/preview/tools.ts";
+import { KnowledgeToolkitHandlersLive } from "./toolkits/knowledge/handlers.ts";
+import { KnowledgeToolkit } from "./toolkits/knowledge/tools.ts";
 
 const unauthorized = HttpServerResponse.jsonUnsafe(
   {
@@ -211,6 +213,10 @@ const PreviewSnapshotRegistrationLive = Layer.effectDiscard(registerPreviewSnaps
   Layer.provide(PreviewSnapshotToolkitHandlersLive),
 );
 
+const KnowledgeToolkitRegistrationLive = McpServer.toolkit(KnowledgeToolkit).pipe(
+  Layer.provide(KnowledgeToolkitHandlersLive),
+);
+
 export const PreviewToolkitRegistrationLive = Layer.mergeAll(
   PreviewStandardToolkitRegistrationLive,
   PreviewSnapshotRegistrationLive,
@@ -223,4 +229,7 @@ const McpTransportLive = McpServer.layerHttp({
   protocols: [McpProtocol.v2025_06_18],
 }).pipe(Layer.provide(McpAuthMiddlewareLive));
 
-export const layer = PreviewToolkitRegistrationLive.pipe(Layer.provideMerge(McpTransportLive));
+export const layer = Layer.mergeAll(
+  PreviewToolkitRegistrationLive,
+  KnowledgeToolkitRegistrationLive,
+).pipe(Layer.provideMerge(McpTransportLive));

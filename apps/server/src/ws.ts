@@ -123,6 +123,7 @@ import * as PairingGrantStore from "./auth/PairingGrantStore.ts";
 import * as SessionStore from "./auth/SessionStore.ts";
 import { failEnvironmentAuthInvalid, failEnvironmentInternal } from "./auth/http.ts";
 import * as RelayClient from "@t3tools/shared/relayClient";
+import * as KnowledgeBaseService from "./knowledge/KnowledgeBase.ts";
 const isOrchestrationDispatchCommandError = Schema.is(OrchestrationDispatchCommandError);
 
 const nowIso = Effect.map(DateTime.now, DateTime.formatIso);
@@ -417,6 +418,7 @@ const makeWsRpcLayer = (
       const resourceTelemetry = yield* ResourceTelemetry.ResourceTelemetry;
       const usage = yield* UsageService.UsageService;
       const relayClient = yield* RelayClient.RelayClient;
+      const knowledgeBase = yield* KnowledgeBaseService.KnowledgeBaseService;
       const authorizationError = (requiredScope: AuthEnvironmentScope) =>
         new EnvironmentAuthorizationError({
           message: `The authenticated token is missing required scope: ${requiredScope}.`,
@@ -1438,6 +1440,19 @@ const makeWsRpcLayer = (
           observeRpcEffect(WS_METHODS.serverGetConfig, loadServerConfig, {
             "rpc.aggregate": "server",
           }),
+        [WS_METHODS.knowledgeList]: (_input) =>
+          observeRpcEffect(WS_METHODS.knowledgeList, knowledgeBase.listNotes.pipe(Effect.map(notes => ({ notes }))), {
+            "rpc.aggregate": "server",
+          }),
+        [WS_METHODS.knowledgeRead]: (input) =>
+          observeRpcEffect(WS_METHODS.knowledgeRead, knowledgeBase.readNote(input.id).pipe(Effect.map(note => ({ note }))), {
+            "rpc.aggregate": "server",
+          }),
+        [WS_METHODS.knowledgeWrite]: (input) =>
+          observeRpcEffect(WS_METHODS.knowledgeWrite, knowledgeBase.writeNote(input.title, input.content, input.id).pipe(Effect.map(note => ({ note }))), {
+            "rpc.aggregate": "server",
+          }),
+
         [WS_METHODS.serverRefreshProviders]: (input) =>
           observeRpcEffect(
             WS_METHODS.serverRefreshProviders,
@@ -2311,6 +2326,7 @@ export const websocketRpcRouteLayer = Layer.unwrap(
                   Layer.provide(VcsProcess.layer),
                 ),
               ),
+              Layer.provide(KnowledgeBaseService.layer),
             ),
           ),
         );

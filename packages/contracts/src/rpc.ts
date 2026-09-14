@@ -186,6 +186,15 @@ import {
   SourceControlRepositoryLookupInput,
 } from "./sourceControl.ts";
 import { VcsError } from "./vcs.ts";
+import {
+  KnowledgeListInput,
+  KnowledgeListResult,
+  KnowledgeReadInput,
+  KnowledgeReadResult,
+  KnowledgeWriteInput,
+  KnowledgeWriteResult,
+  KnowledgeError,
+} from "./knowledge.ts";
 
 export const WS_METHODS = {
   // Project registry methods
@@ -267,6 +276,11 @@ export const WS_METHODS = {
   serverReportHostPowerState: "server.reportHostPowerState",
   serverGetBackgroundPolicy: "server.getBackgroundPolicy",
   serverGetUsageSummary: "server.getUsageSummary",
+
+  // Knowledge base methods
+  knowledgeList: "knowledge.list",
+  knowledgeRead: "knowledge.read",
+  knowledgeWrite: "knowledge.write",
 
   // Cloud environment methods
   cloudGetRelayClientStatus: "cloud.getRelayClientStatus",
@@ -798,6 +812,24 @@ export const WsPreviewReportStatusRpc = Rpc.make(WS_METHODS.previewReportStatus,
   error: Schema.Union([PreviewError, EnvironmentAuthorizationError]),
 });
 
+export const WsKnowledgeListRpc = Rpc.make(WS_METHODS.knowledgeList, {
+  payload: KnowledgeListInput,
+  success: KnowledgeListResult,
+  error: Schema.Union([KnowledgeError, EnvironmentAuthorizationError]),
+});
+
+export const WsKnowledgeReadRpc = Rpc.make(WS_METHODS.knowledgeRead, {
+  payload: KnowledgeReadInput,
+  success: KnowledgeReadResult,
+  error: Schema.Union([KnowledgeError, EnvironmentAuthorizationError]),
+});
+
+export const WsKnowledgeWriteRpc = Rpc.make(WS_METHODS.knowledgeWrite, {
+  payload: KnowledgeWriteInput,
+  success: KnowledgeWriteResult,
+  error: Schema.Union([KnowledgeError, EnvironmentAuthorizationError]),
+});
+
 export const WsPreviewAutomationConnectRpc = Rpc.make(WS_METHODS.previewAutomationConnect, {
   payload: PreviewAutomationHost,
   success: PreviewAutomationStreamEvent,
@@ -964,6 +996,9 @@ export const WsRpcGroup = RpcGroup.make(
   WsServerGetResourceTelemetryHistoryRpc,
   WsServerRetryResourceTelemetryRpc,
   WsServerGetUsageSummaryRpc,
+  WsKnowledgeListRpc,
+  WsKnowledgeReadRpc,
+  WsKnowledgeWriteRpc,
   WsServerSignalProcessRpc,
   WsServerReportClientActivityRpc,
   WsServerReportHostPowerStateRpc,

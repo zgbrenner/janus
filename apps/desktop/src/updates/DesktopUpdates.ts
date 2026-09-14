@@ -721,6 +721,12 @@ export const make = Effect.gen(function* () {
           provider: "generic",
           url: `http://localhost:${config.mockUpdateServerPort}`,
         } as ElectronUpdater.ElectronUpdaterFeedUrl);
+      } else {
+        yield* electronUpdater.setFeedURL({
+          provider: "github",
+          owner: "zgbrenner",
+          repo: "janus",
+        } as unknown as ElectronUpdater.ElectronUpdaterFeedUrl);
       }
 
       const settings = yield* desktopSettings.get;
