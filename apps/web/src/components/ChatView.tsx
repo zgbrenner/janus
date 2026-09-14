@@ -150,7 +150,6 @@ import { PullRequestDetailGhost } from "./pullRequest/PullRequestGhosts";
 import { PullRequestsUnavailableState } from "./pullRequest/PullRequestsUnavailableState";
 import { RightPanelTabs, type PullRequestTabStatus } from "./RightPanelTabs";
 import { AgentsPanel } from "./AgentsPanel";
-import { PreviewPanel } from "./preview/PreviewPanel";
 import { KnowledgeNotebook } from "./knowledge/KnowledgeNotebook";
 import {
   deriveAgentPanelModel,
@@ -4970,7 +4969,19 @@ function ChatViewContent(props: ChatViewProps) {
             },
           ]
         : sendContextPreviewAnnotations;
-    const promptForSend = promptRef.current;
+
+    let promptForSend = promptRef.current;
+    if (agentPersona && agentPersona !== "default") {
+      const personaPrompts: Record<string, string> = {
+        frontend: "You are an expert Frontend Developer. Focus on UI/UX, React, CSS, and modern frontend architecture.",
+        backend: "You are an expert Backend Developer. Focus on API design, database schemas, performance, and security.",
+        product: "You are a Product Manager. Focus on user needs, feature prioritization, business value, and concise requirements.",
+      };
+      if (personaPrompts[agentPersona]) {
+        promptForSend = `[System Persona: ${personaPrompts[agentPersona]}]\n\n${promptForSend}`;
+      }
+    }
+
     const {
       trimmedPrompt: trimmed,
       sendableTerminalContexts: sendableComposerTerminalContexts,
@@ -6012,7 +6023,7 @@ function ChatViewContent(props: ChatViewProps) {
 
   const panelToggleControls = (
     <PanelLayoutControls
-      terminalAvailable={activeProject !== null}
+      terminalAvailable={activeProject !== null && experienceMode !== "knowledge_worker"}
       terminalOpen={terminalUiState.terminalOpen}
       terminalShortcutLabel={shortcutLabelForCommand(keybindings, "terminal.toggle")}
       rightPanelAvailable={activeProject !== null}
@@ -6526,7 +6537,7 @@ function ChatViewContent(props: ChatViewProps) {
         </div>
         {/* end horizontal flex container */}
 
-        {mountedTerminalThreadRefs.map(({ key: mountedThreadKey, threadRef: mountedThreadRef }) => (
+        {experienceMode !== "knowledge_worker" && mountedTerminalThreadRefs.map(({ key: mountedThreadKey, threadRef: mountedThreadRef }) => (
           <PersistentThreadTerminalDrawer
             key={mountedThreadKey}
             threadRef={mountedThreadRef}
@@ -6569,8 +6580,8 @@ function ChatViewContent(props: ChatViewProps) {
           onAddAgents={addAgentsSurface}
           onAddKnowledge={addKnowledgeSurface}
           browserAvailable={isPreviewSupportedInRuntime()}
-          terminalAvailable={activeProject !== null}
-          diffAvailable={isServerThread && isGitRepo}
+          terminalAvailable={activeProject !== null && experienceMode !== "knowledge_worker"}
+          diffAvailable={isServerThread && isGitRepo && experienceMode !== "knowledge_worker"}
           filesAvailable={activeProject !== null}
           pullRequestAvailable={pullRequestSurfaceAvailable}
           agentsAvailable
@@ -6605,8 +6616,8 @@ function ChatViewContent(props: ChatViewProps) {
             onAddAgents={addAgentsSurface}
             onAddKnowledge={addKnowledgeSurface}
             browserAvailable={isPreviewSupportedInRuntime()}
-            terminalAvailable={activeProject !== null}
-            diffAvailable={isServerThread && isGitRepo}
+            terminalAvailable={activeProject !== null && experienceMode !== "knowledge_worker"}
+            diffAvailable={isServerThread && isGitRepo && experienceMode !== "knowledge_worker"}
             filesAvailable={activeProject !== null}
             pullRequestAvailable={pullRequestSurfaceAvailable}
             agentsAvailable

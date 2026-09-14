@@ -26,6 +26,8 @@ export interface PersistedUiState {
   expandedProjectCwds?: string[];
   projectOrderCwds?: string[];
   defaultAdvertisedEndpointKey?: string | null;
+  experienceMode?: "engineer" | "knowledge_worker";
+  agentPersona?: string;
   threadChangedFilesExpansionVersion?: typeof THREAD_CHANGED_FILES_EXPANSION_VERSION;
   threadChangedFilesExpandedById?: Record<string, Record<string, boolean>>;
 }
@@ -42,6 +44,8 @@ export interface UiThreadState {
 
 export interface UiEndpointState {
   defaultAdvertisedEndpointKey: string | null;
+  experienceMode: "engineer" | "knowledge_worker";
+  agentPersona: string;
 }
 
 export interface UiState extends UiProjectState, UiThreadState, UiEndpointState {}
@@ -52,6 +56,8 @@ const initialState: UiState = {
   threadLastVisitedAtById: {},
   threadChangedFilesExpandedById: {},
   defaultAdvertisedEndpointKey: null,
+  experienceMode: "engineer",
+  agentPersona: "default",
 };
 
 const LEGACY_PROJECT_CWD_PREFERENCE_PREFIX = "legacy-project-cwd:";
@@ -136,6 +142,9 @@ export function parsePersistedState(parsed: PersistedUiState): UiState {
       parsed.defaultAdvertisedEndpointKey.length > 0
         ? parsed.defaultAdvertisedEndpointKey
         : null,
+    experienceMode:
+      parsed.experienceMode === "knowledge_worker" ? "knowledge_worker" : "engineer",
+    agentPersona: parsed.agentPersona ?? "default",
   };
 }
 
@@ -206,6 +215,8 @@ export function persistState(state: UiState): void {
         projectOrder: state.projectOrder,
         threadLastVisitedAtById: state.threadLastVisitedAtById,
         defaultAdvertisedEndpointKey: state.defaultAdvertisedEndpointKey,
+        experienceMode: state.experienceMode,
+        agentPersona: state.agentPersona,
         threadChangedFilesExpansionVersion: THREAD_CHANGED_FILES_EXPANSION_VERSION,
         threadChangedFilesExpandedById: state.threadChangedFilesExpandedById,
       } satisfies PersistedUiState),
@@ -305,6 +316,26 @@ export function setDefaultAdvertisedEndpointKey(state: UiState, key: string | nu
   };
 }
 
+export function setExperienceMode(state: UiState, mode: "engineer" | "knowledge_worker"): UiState {
+  if (state.experienceMode === mode) {
+    return state;
+  }
+  return {
+    ...state,
+    experienceMode: mode,
+  };
+}
+
+export function setAgentPersona(state: UiState, persona: string): UiState {
+  if (state.agentPersona === persona) {
+    return state;
+  }
+  return {
+    ...state,
+    agentPersona: persona,
+  };
+}
+
 export function resolveProjectExpanded(
   projectExpandedById: Readonly<Record<string, boolean>>,
   preferenceKeys: readonly string[],
@@ -393,6 +424,8 @@ interface UiStateStore extends UiState {
     draggedProjectIds: readonly string[],
     targetProjectIds: readonly string[],
   ) => void;
+  setExperienceMode: (mode: "engineer" | "knowledge_worker") => void;
+  setAgentPersona: (persona: string) => void;
 }
 
 export const useUiStateStore = create<UiStateStore>((set) => ({
@@ -411,6 +444,8 @@ export const useUiStateStore = create<UiStateStore>((set) => ({
     set((state) =>
       reorderProjects(state, currentProjectOrder, draggedProjectIds, targetProjectIds),
     ),
+  setExperienceMode: (mode) => set((state) => setExperienceMode(state, mode)),
+  setAgentPersona: (persona) => set((state) => setAgentPersona(state, persona)),
 }));
 
 useUiStateStore.subscribe((state) => debouncedPersistState.maybeExecute(state));

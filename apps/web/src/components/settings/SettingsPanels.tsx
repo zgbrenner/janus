@@ -61,6 +61,7 @@ import {
   readThemePreference,
   useTheme,
 } from "../../hooks/useTheme";
+import { useUiStateStore } from "../../uiStateStore";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import { usePrimarySettings, useUpdatePrimarySettings } from "../../hooks/useSettings";
 import { useThreadActions } from "../../hooks/useThreadActions";
@@ -1707,6 +1708,12 @@ export function GeneralSettingsPanel() {
     otlpMetricsUrl: observability?.otlpMetricsUrl,
   });
 
+  const experienceMode = useUiStateStore((state) => state.experienceMode);
+  const setExperienceMode = useUiStateStore((state) => state.setExperienceMode);
+
+  const agentPersona = useUiStateStore((state) => state.agentPersona);
+  const setAgentPersona = useUiStateStore((state) => state.setAgentPersona);
+
   const textGenerationModelSelection = resolveAppModelSelectionState(settings, serverProviders);
   const textGenInstanceId = textGenerationModelSelection.instanceId;
   const textGenModel = textGenerationModelSelection.model;
@@ -1746,6 +1753,72 @@ export function GeneralSettingsPanel() {
   return (
     <SettingsPageContainer>
       <SettingsSection title="General">
+        <SettingsRow
+          {...searchableSetting("experience-mode")}
+          title="Experience Mode"
+          description="Knowledge Worker mode hides terminal logs and complex orchestration views."
+          control={
+            <Select
+              value={experienceMode}
+              onValueChange={(val: string) =>
+                setExperienceMode(val as "engineer" | "knowledge_worker")
+              }
+            >
+              <SelectTrigger className="w-full sm:w-48" aria-label="Experience Mode">
+                <SelectValue>
+                  {experienceMode === "knowledge_worker" ? "Knowledge Worker" : "Engineer"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectPopup align="end" alignItemWithTrigger={false}>
+                <SelectItem hideIndicator value="engineer">
+                  Engineer
+                </SelectItem>
+                <SelectItem hideIndicator value="knowledge_worker">
+                  Knowledge Worker
+                </SelectItem>
+              </SelectPopup>
+            </Select>
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("agent-persona")}
+          title="System Persona"
+          description="Sets the agent's tone and primary perspective."
+          control={
+            <Select
+              value={agentPersona}
+              onValueChange={(val: string) => setAgentPersona(val)}
+            >
+              <SelectTrigger className="w-full sm:w-48" aria-label="System Persona">
+                <SelectValue>
+                  {agentPersona === "default"
+                    ? "Default"
+                    : agentPersona === "frontend"
+                      ? "Frontend Developer"
+                      : agentPersona === "backend"
+                        ? "Backend Developer"
+                        : "Product Manager"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectPopup align="end" alignItemWithTrigger={false}>
+                <SelectItem hideIndicator value="default">
+                  Default
+                </SelectItem>
+                <SelectItem hideIndicator value="frontend">
+                  Frontend Developer
+                </SelectItem>
+                <SelectItem hideIndicator value="backend">
+                  Backend Developer
+                </SelectItem>
+                <SelectItem hideIndicator value="product">
+                  Product Manager
+                </SelectItem>
+              </SelectPopup>
+            </Select>
+          }
+        />
+
         <SettingsRow
           {...searchableSetting("project-grouping")}
           description="Combine matching repositories across environments."
