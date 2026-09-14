@@ -6,16 +6,21 @@ interface ComposerPendingApprovalPanelProps {
   pendingCount: number;
 }
 
+/** What the panel calls this request. Shared so the announcement a screen reader
+    hears is the same sentence a sighted user reads, and cannot drift from it. */
+export function approvalSummaryLabel(requestKind: PendingApproval["requestKind"]): string {
+  return requestKind === "command"
+    ? "Command approval requested"
+    : requestKind === "file-read"
+      ? "File-read approval requested"
+      : "File-change approval requested";
+}
+
 export const ComposerPendingApprovalPanel = memo(function ComposerPendingApprovalPanel({
   approval,
   pendingCount,
 }: ComposerPendingApprovalPanelProps) {
-  const approvalSummary =
-    approval.requestKind === "command"
-      ? "Command approval requested"
-      : approval.requestKind === "file-read"
-        ? "File-read approval requested"
-        : "File-change approval requested";
+  const approvalSummary = approvalSummaryLabel(approval.requestKind);
   const detailLabel =
     approval.requestKind === "command"
       ? "Command"
