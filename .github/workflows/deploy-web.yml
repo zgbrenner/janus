@@ -36,6 +36,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Web App
+        env:
+          VITE_HOSTED_APP_CHANNEL: "latest"
+          VITE_HOSTED_APP_URL: "https://janus-web-9tc.pages.dev"
         run: pnpm --filter @t3tools/web build
 
       - name: Ensure Cloudflare Pages project exists
