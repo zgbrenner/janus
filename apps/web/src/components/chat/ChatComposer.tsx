@@ -103,6 +103,7 @@ import {
   renderProviderTraitsPicker,
 } from "./composerProviderState";
 import { ContextWindowMeter } from "./ContextWindowMeter";
+import { useUiStateStore } from "../../uiStateStore";
 import { buildExpandedImagePreview, type ExpandedImagePreview } from "./ExpandedImagePreview";
 import { basenameOfPath } from "../../pierre-icons";
 import { cn, randomUUID } from "~/lib/utils";
@@ -667,6 +668,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     setThreadError,
     onExpandImage,
   } = props;
+  const agentPersona = useUiStateStore((state) => state.agentPersona);
   const isSendDisabled = sendDisabledReason !== null;
 
   // ------------------------------------------------------------------
@@ -2653,6 +2655,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         onDragLeaveCapture={onComposerMentionDragLeaveCapture}
         onDropCapture={composerMentionDragHandlers.onDrop}
       >
+        {agentPersona && agentPersona !== "default" && (
+          <div className="mx-4 mt-2 mb-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span>🤖</span>
+            <span>Persona: {agentPersona.replace("_", " ")}</span>
+          </div>
+        )}
         <div
           ref={composerSurfaceRef}
           data-chat-composer-mobile-collapsed={isComposerCollapsedMobile ? "true" : "false"}

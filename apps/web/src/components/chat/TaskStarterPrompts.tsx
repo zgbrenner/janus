@@ -1,10 +1,45 @@
+import { useUiStateStore } from "../../uiStateStore";
+
 export type TaskStarter = Readonly<{
-  id: "research" | "brief" | "organize" | "analyze" | "build";
+  id: string;
   label: string;
   prompt: string;
 }>;
 
-export const TASK_STARTERS: ReadonlyArray<TaskStarter> = [
+export const ENGINEER_STARTERS: ReadonlyArray<TaskStarter> = [
+  {
+    id: "build",
+    label: "Build a new feature",
+    prompt:
+      "Build a new feature: inspect the workspace, propose a plan, and implement the necessary changes.",
+  },
+  {
+    id: "refactor",
+    label: "Refactor code",
+    prompt:
+      "Refactor this code: analyze the current implementation, suggest improvements for maintainability and performance, and apply the refactor.",
+  },
+  {
+    id: "test",
+    label: "Write unit tests",
+    prompt:
+      "Write unit tests: review the code coverage, identify missing test cases, and write comprehensive tests.",
+  },
+  {
+    id: "debug",
+    label: "Debug an issue",
+    prompt:
+      "Debug an issue: I am seeing an error. Please investigate the logs or code, identify the root cause, and propose a fix.",
+  },
+  {
+    id: "explain",
+    label: "Explain codebase",
+    prompt:
+      "Explain this codebase: give me a high-level overview of the architecture, key patterns, and where to find the core logic.",
+  },
+];
+
+export const KNOWLEDGE_WORKER_STARTERS: ReadonlyArray<TaskStarter> = [
   {
     id: "research",
     label: "Synthesize research",
@@ -13,15 +48,9 @@ export const TASK_STARTERS: ReadonlyArray<TaskStarter> = [
   },
   {
     id: "brief",
-    label: "Prepare a brief",
+    label: "Draft a brief",
     prompt:
-      "Prepare a brief for this work: clarify the goal, audience, key decisions, and next steps.",
-  },
-  {
-    id: "organize",
-    label: "Organize files",
-    prompt:
-      "Organize these files: review the workspace, propose a clear structure, and make the changes after I approve.",
+      "Draft a brief for this work: clarify the goal, audience, key decisions, and next steps.",
   },
   {
     id: "analyze",
@@ -30,10 +59,16 @@ export const TASK_STARTERS: ReadonlyArray<TaskStarter> = [
       "Analyze this dataset: identify the important patterns, explain the findings, and recommend the next steps.",
   },
   {
-    id: "build",
-    label: "Build or fix software",
+    id: "organize",
+    label: "Organize files",
     prompt:
-      "Build or fix this software: inspect the workspace, propose a plan, and implement the smallest reliable change.",
+      "Organize these files: review the documents, propose a clear folder structure, and organize them logically.",
+  },
+  {
+    id: "summarize",
+    label: "Summarize findings",
+    prompt:
+      "Summarize the findings: read through the provided notes or documents and extract the key takeaways into bullet points.",
   },
 ];
 
@@ -42,9 +77,13 @@ export function TaskStarterPrompts({
 }: {
   readonly onSelect: (prompt: string) => void;
 }): React.JSX.Element {
+  const experienceMode = useUiStateStore((state) => state.experienceMode);
+  const starters =
+    experienceMode === "knowledge_worker" ? KNOWLEDGE_WORKER_STARTERS : ENGINEER_STARTERS;
+
   return (
     <div aria-label="Task starters" className="janus-task-starters" role="group">
-      {TASK_STARTERS.map((starter) => (
+      {starters.map((starter) => (
         <button key={starter.id} type="button" onClick={() => onSelect(starter.prompt)}>
           {starter.label}
         </button>

@@ -1,6 +1,10 @@
-import { describe, expect, it, vi } from "vite-plus/test";
-
-import { TASK_STARTERS, TaskStarterPrompts } from "./TaskStarterPrompts";
+import { describe, expect, it, vi, beforeEach } from "vite-plus/test";
+import {
+  ENGINEER_STARTERS,
+  KNOWLEDGE_WORKER_STARTERS,
+  TaskStarterPrompts,
+} from "./TaskStarterPrompts";
+import { useUiStateStore } from "../../uiStateStore";
 
 function findButtons(node: unknown): Array<{ props: Record<string, unknown> }> {
   if (typeof node !== "object" || node === null) return [];
@@ -13,20 +17,17 @@ function findButtons(node: unknown): Array<{ props: Record<string, unknown> }> {
 }
 
 describe("TaskStarterPrompts", () => {
-  it("offers five stable knowledge and developer-work starters", () => {
-    expect(TASK_STARTERS.map((starter) => starter.id)).toEqual([
-      "research",
-      "brief",
-      "organize",
-      "analyze",
+  beforeEach(() => {
+    useUiStateStore.setState({ experienceMode: "engineer" });
+  });
+
+  it("offers five stable engineer starters", () => {
+    expect(ENGINEER_STARTERS.map((starter: any) => starter.id)).toEqual([
       "build",
-    ]);
-    expect(TASK_STARTERS.map((starter) => starter.prompt)).toEqual([
-      expect.stringMatching(/research/i),
-      expect.stringMatching(/brief/i),
-      expect.stringMatching(/organize/i),
-      expect.stringMatching(/data/i),
-      expect.stringMatching(/build|fix/i),
+      "refactor",
+      "test",
+      "debug",
+      "explain",
     ]);
   });
 
@@ -46,6 +47,6 @@ describe("TaskStarterPrompts", () => {
     (buttons[0]?.props.onClick as (() => void) | undefined)?.();
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith(TASK_STARTERS[0]?.prompt);
+    expect(onSelect).toHaveBeenCalledWith(ENGINEER_STARTERS[0]?.prompt);
   });
 });

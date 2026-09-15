@@ -24,7 +24,7 @@ import {
   MenuTrigger,
 } from "../ui/menu";
 import { TaskStarterPrompts } from "./TaskStarterPrompts";
-
+import { useUiStateStore } from "~/uiStateStore";
 interface DraftHeroHeadlineProps {
   readonly activeProjectRef: ScopedProjectRef | null;
   readonly activeProjectTitle: string | null;
@@ -43,6 +43,7 @@ export function DraftHeroHeadline({
   const projectGroupingSettings = useClientSettings(selectProjectGroupingSettings);
   const projectSortOrder = useClientSettings((settings) => settings.sidebarProjectSortOrder);
   const handleNewThread = useNewThreadHandler();
+  const experienceMode = useUiStateStore((state) => state.experienceMode);
   const openAddProject = useCallback(() => openCommandPalette({ open: "add-project" }), []);
 
   const environmentLabelById = useMemo(
@@ -103,11 +104,16 @@ export function DraftHeroHeadline({
   const projectSelector = shouldShowProjectMenu ? (
     <Menu>
       <MenuTrigger
-        aria-label={hasResolvedProject ? "Change workspace" : "Choose a workspace"}
+        aria-label={
+          hasResolvedProject
+            ? `Change ${experienceMode === "knowledge_worker" ? "project" : "workspace"}`
+            : `Choose a ${experienceMode === "knowledge_worker" ? "project" : "workspace"}`
+        }
         className="pointer-events-auto inline-block max-w-64 truncate border-foreground/60 border-b border-dotted align-baseline text-foreground transition-colors hover:border-foreground/80 focus-visible:rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         title={activeProjectDisplayName ?? undefined}
       >
-        {activeProjectDisplayName ?? "Choose a workspace"}
+        {activeProjectDisplayName ??
+          `Choose a ${experienceMode === "knowledge_worker" ? "project" : "workspace"}`}
       </MenuTrigger>
       <MenuPopup align="center" className="max-h-80 min-w-40! w-max max-w-64 overflow-y-auto">
         <MenuRadioGroup
@@ -136,7 +142,7 @@ export function DraftHeroHeadline({
         <MenuSeparator />
         <MenuItem onClick={openAddProject}>
           <FolderPlusIcon />
-          New workspace
+          New {experienceMode === "knowledge_worker" ? "project" : "workspace"}
         </MenuItem>
       </MenuPopup>
     </Menu>
@@ -146,7 +152,8 @@ export function DraftHeroHeadline({
       onClick={openAddProject}
       className="pointer-events-auto inline cursor-pointer border-muted-foreground/35 border-b border-dotted text-muted-foreground/60 transition-colors hover:border-muted-foreground/60 hover:text-muted-foreground/80 focus-visible:rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
     >
-      {activeProjectTitle ?? "Add a workspace"}
+      {activeProjectTitle ??
+        `Add a ${experienceMode === "knowledge_worker" ? "project" : "workspace"}`}
     </button>
   );
 
@@ -156,13 +163,17 @@ export function DraftHeroHeadline({
         {hasResolvedProject ? (
           <>What would you like to accomplish in {projectSelector}?</>
         ) : canChooseProject ? (
-          <>Choose a workspace to begin</>
+          <>Choose a {experienceMode === "knowledge_worker" ? "project" : "workspace"} to begin</>
         ) : (
-          <>Add a workspace to begin</>
+          <>Add a {experienceMode === "knowledge_worker" ? "project" : "workspace"} to begin</>
         )}
       </h1>
       <p className="mx-auto mt-3 max-w-2xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
-        Janus can work with files, research, documents, data, and code in your selected workspace.
+        Janus can work with{" "}
+        {experienceMode === "knowledge_worker"
+          ? "documents, data, and research"
+          : "files, code, data, and research"}{" "}
+        in your selected {experienceMode === "knowledge_worker" ? "project" : "workspace"}.
       </p>
       <TaskStarterPrompts onSelect={onStarterSelect} />
     </section>

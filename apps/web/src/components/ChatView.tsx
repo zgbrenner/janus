@@ -6221,6 +6221,7 @@ function ChatViewContent(props: ChatViewProps) {
             onAddProjectScript={saveProjectScript}
             onUpdateProjectScript={updateProjectScript}
             onDeleteProjectScript={deleteProjectScript}
+            onOpenKnowledge={addKnowledgeSurface}
           />
         </header>
 

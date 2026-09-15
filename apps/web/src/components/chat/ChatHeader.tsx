@@ -11,7 +11,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import type { ChangeRequestStateLike } from "@t3tools/client-runtime/state/thread-settled";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, LibraryIcon } from "lucide-react";
 import {
   memo,
   useCallback,
@@ -42,6 +42,7 @@ import {
   WorkspaceBreadcrumbSeparator,
 } from "../WorkspaceBreadcrumb";
 import { cn } from "~/lib/utils";
+import { useUiStateStore } from "~/uiStateStore";
 
 interface ChatHeaderProps {
   activeThreadEnvironmentId: EnvironmentId;
@@ -71,6 +72,7 @@ interface ChatHeaderProps {
     input: NewProjectScriptInput,
   ) => Promise<ProjectScriptActionResult>;
   onDeleteProjectScript: (scriptId: string) => Promise<ProjectScriptActionResult>;
+  onOpenKnowledge?: () => void;
 }
 
 /**
@@ -122,8 +124,10 @@ export const ChatHeader = memo(function ChatHeader({
   onAddProjectScript,
   onUpdateProjectScript,
   onDeleteProjectScript,
+  onOpenKnowledge,
 }: ChatHeaderProps) {
   const primaryEnvironmentId = usePrimaryEnvironmentId();
+  const experienceMode = useUiStateStore((state) => state.experienceMode);
   const fileScripts = useT3ProjectFileScripts(
     activeThreadEnvironmentId,
     activeProjectScripts ? activeProjectCwd : null,
@@ -334,6 +338,23 @@ export const ChatHeader = memo(function ChatHeader({
             onOpenPullRequest={onOpenPullRequest}
             {...(draftId ? { draftId } : {})}
           />
+        )}
+        {experienceMode === "knowledge_worker" && onOpenKnowledge && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label="Open Knowledge Base"
+                  onClick={onOpenKnowledge}
+                  className="inline-flex cursor-pointer items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <LibraryIcon className="size-4" />
+                </button>
+              }
+            />
+            <TooltipPopup side="bottom">Knowledge Base</TooltipPopup>
+          </Tooltip>
         )}
       </div>
     </div>
