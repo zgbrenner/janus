@@ -1128,6 +1128,8 @@ function PullRequestsRouteView() {
             pendingSurfaceIds={EMPTY_PENDING_SURFACES}
             previewSessions={EMPTY_PREVIEW_SESSIONS}
             terminalLabelsById={EMPTY_TERMINAL_LABELS}
+            knowledgeAvailable={false}
+            onAddKnowledge={() => {}}
             onActivate={(surface) => {
               if (surface.kind === "pull-request") activateSurface(surface);
             }}

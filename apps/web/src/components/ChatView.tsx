@@ -1241,6 +1241,8 @@ function ChatViewContent(props: ChatViewProps) {
     [environmentId, threadId],
   );
   const routeThreadKey = useMemo(() => scopedThreadKey(routeThreadRef), [routeThreadRef]);
+  const experienceMode = useUiStateStore((s) => s.experienceMode);
+  const agentPersona = useUiStateStore((s) => s.agentPersona);
   const updateProject = useAtomCommand(projectEnvironment.update, { reportFailure: false });
   const upsertKeybinding = useAtomCommand(serverEnvironment.upsertKeybinding, {
     reportFailure: false,
@@ -4973,9 +4975,12 @@ function ChatViewContent(props: ChatViewProps) {
     let promptForSend = promptRef.current;
     if (agentPersona && agentPersona !== "default") {
       const personaPrompts: Record<string, string> = {
-        frontend: "You are an expert Frontend Developer. Focus on UI/UX, React, CSS, and modern frontend architecture.",
-        backend: "You are an expert Backend Developer. Focus on API design, database schemas, performance, and security.",
-        product: "You are a Product Manager. Focus on user needs, feature prioritization, business value, and concise requirements.",
+        frontend:
+          "You are an expert Frontend Developer. Focus on UI/UX, React, CSS, and modern frontend architecture.",
+        backend:
+          "You are an expert Backend Developer. Focus on API design, database schemas, performance, and security.",
+        product:
+          "You are a Product Manager. Focus on user needs, feature prioritization, business value, and concise requirements.",
       };
       if (personaPrompts[agentPersona]) {
         promptForSend = `[System Persona: ${personaPrompts[agentPersona]}]\n\n${promptForSend}`;
@@ -6537,24 +6542,29 @@ function ChatViewContent(props: ChatViewProps) {
         </div>
         {/* end horizontal flex container */}
 
-        {experienceMode !== "knowledge_worker" && mountedTerminalThreadRefs.map(({ key: mountedThreadKey, threadRef: mountedThreadRef }) => (
-          <PersistentThreadTerminalDrawer
-            key={mountedThreadKey}
-            threadRef={mountedThreadRef}
-            threadId={mountedThreadRef.threadId}
-            visible={mountedThreadKey === activeThreadKey && terminalUiState.terminalOpen}
-            launchContext={
-              mountedThreadKey === activeThreadKey ? (activeTerminalLaunchContext ?? null) : null
-            }
-            focusRequestId={mountedThreadKey === activeThreadKey ? terminalFocusRequestId : 0}
-            splitShortcutLabel={splitTerminalShortcutLabel ?? undefined}
-            splitVerticalShortcutLabel={splitTerminalVerticalShortcutLabel ?? undefined}
-            newShortcutLabel={newTerminalShortcutLabel ?? undefined}
-            closeShortcutLabel={closeTerminalShortcutLabel ?? undefined}
-            keybindings={keybindings}
-            onAddTerminalContext={addTerminalContextToDraft}
-          />
-        ))}
+        {experienceMode !== "knowledge_worker" &&
+          mountedTerminalThreadRefs.map(
+            ({ key: mountedThreadKey, threadRef: mountedThreadRef }) => (
+              <PersistentThreadTerminalDrawer
+                key={mountedThreadKey}
+                threadRef={mountedThreadRef}
+                threadId={mountedThreadRef.threadId}
+                visible={mountedThreadKey === activeThreadKey && terminalUiState.terminalOpen}
+                launchContext={
+                  mountedThreadKey === activeThreadKey
+                    ? (activeTerminalLaunchContext ?? null)
+                    : null
+                }
+                focusRequestId={mountedThreadKey === activeThreadKey ? terminalFocusRequestId : 0}
+                splitShortcutLabel={splitTerminalShortcutLabel ?? undefined}
+                splitVerticalShortcutLabel={splitTerminalVerticalShortcutLabel ?? undefined}
+                newShortcutLabel={newTerminalShortcutLabel ?? undefined}
+                closeShortcutLabel={closeTerminalShortcutLabel ?? undefined}
+                keybindings={keybindings}
+                onAddTerminalContext={addTerminalContextToDraft}
+              />
+            ),
+          )}
       </div>
 
       {!shouldUseRightPanelSheet && rightPanelOpen && activeThreadRef ? (

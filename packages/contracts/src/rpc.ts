@@ -598,24 +598,6 @@ export const WsSourceControlPublishRepositoryRpc = Rpc.make(
   },
 );
 
-export const WsKnowledgeListRpc = Rpc.make(WS_METHODS.knowledgeList, {
-  payload: KnowledgeListInput,
-  success: KnowledgeListResult,
-  error: Schema.Union([KnowledgeError, EnvironmentAuthorizationError]),
-});
-
-export const WsKnowledgeReadRpc = Rpc.make(WS_METHODS.knowledgeRead, {
-  payload: KnowledgeReadInput,
-  success: KnowledgeReadResult,
-  error: Schema.Union([KnowledgeError, EnvironmentAuthorizationError]),
-});
-
-export const WsKnowledgeWriteRpc = Rpc.make(WS_METHODS.knowledgeWrite, {
-  payload: KnowledgeWriteInput,
-  success: KnowledgeWriteResult,
-  error: Schema.Union([KnowledgeError, EnvironmentAuthorizationError]),
-});
-
 export const WsProjectsSearchEntriesRpc = Rpc.make(WS_METHODS.projectsSearchEntries, {
   payload: ProjectSearchEntriesInput,
   success: ProjectSearchEntriesResult,

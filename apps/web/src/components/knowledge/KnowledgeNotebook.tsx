@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 import { useAtomValue } from "@effect/atom-react";
 import { EnvironmentId } from "@t3tools/contracts";
-import { knowledgeListQuery, knowledgeWriteCommand, knowledgeReadQuery } from "../../state/knowledge";
+import {
+  knowledgeListQuery,
+  knowledgeWriteCommand,
+  knowledgeReadQuery,
+} from "../../state/knowledge";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
@@ -36,10 +40,7 @@ export function KnowledgeNotebook({ environmentId }: KnowledgeNotebookProps) {
   }
 
   return (
-    <KnowledgeNoteList
-      environmentId={environmentId}
-      onOpenNote={(id) => setActiveNoteId(id)}
-    />
+    <KnowledgeNoteList environmentId={environmentId} onOpenNote={(id) => setActiveNoteId(id)} />
   );
 }
 
@@ -62,20 +63,21 @@ function KnowledgeNoteList({
         </Button>
       </div>
       <ScrollArea className="flex-1">
-        {listState._tag === "Loading" ? (
+        {listState._tag === "Initial" ? (
           <div className="p-4 text-sm text-muted-foreground">Loading notes...</div>
         ) : listState._tag === "Failure" ? (
           <div className="p-4 text-sm text-red-500">
-            Error loading notes: {String(listState.error)}
+            Error loading notes:{" "}
+            {String((listState as any).error ?? (listState as any).reason ?? "Unknown error")}
           </div>
-        ) : listState.value.notes.length === 0 ? (
+        ) : listState._tag === "Success" && listState.value.notes.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
             <BookOpen className="mb-4 size-8 opacity-20" />
             <p className="mb-4 text-sm">No notes found in the knowledge base.</p>
           </div>
-        ) : (
+        ) : listState._tag === "Success" ? (
           <div className="divide-y">
-            {listState.value.notes.map((note) => (
+            {listState.value.notes.map((note: any) => (
               <button
                 key={note.id}
                 type="button"
@@ -83,16 +85,14 @@ function KnowledgeNoteList({
                 onClick={() => onOpenNote(note.id)}
               >
                 <div className="mb-1 font-medium text-sm">{note.title}</div>
-                <div className="line-clamp-2 text-xs text-muted-foreground">
-                  {note.content}
-                </div>
+                <div className="line-clamp-2 text-xs text-muted-foreground">{note.content}</div>
                 <div className="mt-2 text-[10px] text-muted-foreground/60">
                   Last updated: {new Date(note.updatedAt).toLocaleString()}
                 </div>
               </button>
             ))}
           </div>
-        )}
+        ) : null}
       </ScrollArea>
     </div>
   );
@@ -113,7 +113,7 @@ function KnowledgeNoteEditor({
   // So we pass a dummy ID for new notes, but the query might fail, so we might need a workaround.
   // We'll conditionally read from the atom only if it's an existing note.
   const existingNoteState = useAtomValue(
-    knowledgeReadQuery({ environmentId, input: { id: noteId } })
+    knowledgeReadQuery({ environmentId, input: { id: noteId } }),
   );
 
   const [title, setTitle] = useState("");
@@ -154,16 +154,25 @@ function KnowledgeNoteEditor({
           </Button>
           <h2 className="text-sm font-semibold">{isNew ? "New Note" : "Edit Note"}</h2>
         </div>
-        <Button size="sm" onClick={handleSave} disabled={isSaving || !title.trim() || !content.trim()}>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={isSaving || !title.trim() || !content.trim()}
+        >
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </div>
 
-      {!initialized && existingNoteState._tag === "Loading" ? (
+      {!initialized && existingNoteState._tag === "Initial" ? (
         <div className="p-4 text-sm text-muted-foreground">Loading note...</div>
       ) : !initialized && existingNoteState._tag === "Failure" ? (
         <div className="p-4 text-sm text-red-500">
-          Error loading note: {String(existingNoteState.error)}
+          Error loading note:{" "}
+          {String(
+            (existingNoteState as any).error ??
+              (existingNoteState as any).reason ??
+              "Unknown error",
+          )}
         </div>
       ) : (
         <div className="flex flex-1 flex-col p-4">

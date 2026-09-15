@@ -1754,15 +1754,14 @@ export function GeneralSettingsPanel() {
     <SettingsPageContainer>
       <SettingsSection title="General">
         <SettingsRow
-          {...searchableSetting("experience-mode")}
           title="Experience Mode"
           description="Knowledge Worker mode hides terminal logs and complex orchestration views."
           control={
             <Select
               value={experienceMode}
-              onValueChange={(val: string) =>
-                setExperienceMode(val as "engineer" | "knowledge_worker")
-              }
+              onValueChange={(val) => {
+                if (val) setExperienceMode(val as "engineer" | "knowledge_worker");
+              }}
             >
               <SelectTrigger className="w-full sm:w-48" aria-label="Experience Mode">
                 <SelectValue>
@@ -1782,13 +1781,14 @@ export function GeneralSettingsPanel() {
         />
 
         <SettingsRow
-          {...searchableSetting("agent-persona")}
           title="System Persona"
           description="Sets the agent's tone and primary perspective."
           control={
             <Select
               value={agentPersona}
-              onValueChange={(val: string) => setAgentPersona(val)}
+              onValueChange={(val) => {
+                if (val) setAgentPersona(val);
+              }}
             >
               <SelectTrigger className="w-full sm:w-48" aria-label="System Persona">
                 <SelectValue>

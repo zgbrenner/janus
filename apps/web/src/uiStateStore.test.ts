@@ -24,6 +24,8 @@ function makeUiState(overrides: Partial<UiState> = {}): UiState {
     threadLastVisitedAtById: {},
     threadChangedFilesExpandedById: {},
     defaultAdvertisedEndpointKey: null,
+    experienceMode: "engineer",
+    agentPersona: "developer",
     ...overrides,
   };
 }
@@ -183,6 +185,8 @@ describe("parsePersistedState", () => {
           "turn-2": true,
         },
       },
+      experienceMode: "engineer",
+      agentPersona: "developer",
     });
   });
 
@@ -303,6 +307,8 @@ describe("uiStateStore persistence", () => {
           "turn-2": true,
         },
       },
+      experienceMode: "engineer",
+      agentPersona: "developer",
     });
     expect(parsePersistedState(persisted)).toEqual({
       ...state,
