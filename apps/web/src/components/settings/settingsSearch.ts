@@ -1,3 +1,9 @@
+import {
+  isSettingVisible,
+  isSettingsPathVisible,
+  type ExperienceMode,
+} from "./experienceMode";
+
 export type SettingsPath =
   | "/settings/general"
   | "/settings/appearance"
@@ -224,12 +230,31 @@ function normalizeSearchText(value: string): string {
     .trim();
 }
 
-export function searchSettings(
+export function settingsItemsForExperience(
+  mode: ExperienceMode,
+  items: ReadonlyArray<SettingsSearchItem> = SETTINGS_SEARCH_ITEMS,
+): ReadonlyArray<SettingsSearchItem> {
+  return items.filter(
+    (item) => isSettingsPathVisible(mode, item.to) && isSettingVisible(mode, item.id),
+  );
+}
+
+export function searchSettingsForExperience(
   query: string,
+  mode: ExperienceMode,
   items: ReadonlyArray<SettingsSearchItem> = SETTINGS_SEARCH_ITEMS,
 ): ReadonlyArray<SettingsSearchItem> {
   const normalizedQuery = normalizeSearchText(query);
   if (normalizedQuery.length === 0) return [];
 
-  return items.filter((item) => normalizeSearchText(item.title).includes(normalizedQuery));
+  return settingsItemsForExperience(mode, items).filter((item) =>
+    normalizeSearchText(item.title).includes(normalizedQuery),
+  );
+}
+
+export function searchSettings(
+  query: string,
+  items: ReadonlyArray<SettingsSearchItem> = SETTINGS_SEARCH_ITEMS,
+): ReadonlyArray<SettingsSearchItem> {
+  return searchSettingsForExperience(query, "engineer", items);
 }
