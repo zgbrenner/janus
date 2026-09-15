@@ -3,6 +3,8 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   searchableSetting,
   searchSettings,
+  searchSettingsForExperience,
+  settingsItemsForExperience,
   SETTINGS_SEARCH_ITEMS,
   type SettingsSearchItem,
 } from "./settingsSearch";
@@ -89,5 +91,20 @@ describe("searchSettings", () => {
       to: "/settings/appearance",
       targetId: "appearance",
     });
+  });
+
+  it("removes engineer-only routes and rows from knowledge-worker search", () => {
+    expect(searchSettingsForExperience("providers", "knowledge_worker", ITEMS)).toEqual([]);
+    expect(searchSettingsForExperience("word wrap", "knowledge_worker", ITEMS)).toEqual([]);
+    expect(searchSettingsForExperience("network", "knowledge_worker", ITEMS).map((item) => item.id)).toEqual([
+      "network-access",
+    ]);
+  });
+
+  it("keeps the complete search catalog in engineer mode", () => {
+    expect(settingsItemsForExperience("engineer", ITEMS)).toEqual(ITEMS);
+    expect(searchSettingsForExperience("providers", "engineer", ITEMS).map((item) => item.id)).toEqual([
+      "providers",
+    ]);
   });
 });
