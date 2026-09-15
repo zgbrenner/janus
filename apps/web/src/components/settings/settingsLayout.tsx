@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import {
   createContext,
   type ComponentPropsWithoutRef,
+  isValidElement,
   type ReactNode,
   useCallback,
   useContext,
@@ -12,8 +13,13 @@ import {
 } from "react";
 
 import { cn } from "../../lib/utils";
+import { useUiStateStore } from "../../uiStateStore";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import {
+  isSettingsRowVisible,
+  isSettingsSectionHeaderActionVisible,
+} from "./experienceMode";
 
 interface SettingsSearchTargetContextValue {
   readonly targetId: string | null;
@@ -83,6 +89,25 @@ function useSettingsSearchTarget<T extends HTMLElement>(id: string | undefined) 
   return targetRef;
 }
 
+function settingsNodeText(node: ReactNode): string | null {
+  if (typeof node === "string" || typeof node === "number") {
+    const text = String(node).trim();
+    return text.length > 0 ? text : null;
+  }
+  if (Array.isArray(node)) {
+    const text = node
+      .map(settingsNodeText)
+      .filter((value): value is string => value !== null)
+      .join(" ")
+      .trim();
+    return text.length > 0 ? text : null;
+  }
+  if (isValidElement<{ children?: ReactNode }>(node)) {
+    return settingsNodeText(node.props.children);
+  }
+  return null;
+}
+
 /** Info affordance explaining how a setting interacts with the shared background policy. */
 export function PolicyTooltip({ children }: { readonly children: string }) {
   return (
@@ -129,6 +154,10 @@ export function SettingsSection({
   children: ReactNode;
 }) {
   const targetRef = useSettingsSearchTarget<HTMLElement>(sectionProps.id);
+  const experienceMode = useUiStateStore((state) => state.experienceMode);
+  const visibleHeaderAction = isSettingsSectionHeaderActionVisible(experienceMode, title)
+    ? headerAction
+    : null;
 
   return (
     <section
@@ -142,7 +171,7 @@ export function SettingsSection({
           {icon}
           {title}
         </h2>
-        <div className="flex min-h-7 min-w-7 items-center justify-end">{headerAction}</div>
+        <div className="flex min-h-7 min-w-7 items-center justify-end">{visibleHeaderAction}</div>
       </div>
       <div className="relative space-y-1 overflow-visible text-foreground">{children}</div>
     </section>
@@ -167,6 +196,16 @@ export function SettingsRow({
   children?: ReactNode;
 }) {
   const targetRef = useSettingsSearchTarget<HTMLDivElement>(rowProps.id);
+  const experienceMode = useUiStateStore((state) => state.experienceMode);
+  const visible = isSettingsRowVisible(
+    experienceMode,
+    rowProps.id,
+    settingsNodeText(title),
+  );
+
+  if (!visible) {
+    return rowProps.id ? <div id={rowProps.id} hidden data-experience-hidden="true" /> : null;
+  }
 
   return (
     <div
@@ -244,6 +283,7 @@ export function SettingsPageContainer({
   const navigate = useNavigate();
   const hash = useLocation({ select: (location) => location.hash });
   const targetId = hash.replace(/^#/, "") || null;
+  const experienceMode = useUiStateStore((state) => state.experienceMode);
   const clearTargetHash = useCallback(() => {
     void navigate({ hash: "", replace: true, resetScroll: false, hashScrollIntoView: false });
   }, [navigate]);
@@ -251,7 +291,14 @@ export function SettingsPageContainer({
   return (
     <SettingsSearchTargetProvider targetId={targetId} onTargetHandled={clearTargetHash}>
       <div className="settings-page-scroll-fade scrollbar-gutter-both flex-1 overflow-y-auto px-4 pt-10 pb-7 sm:px-8 sm:pt-12 sm:pb-10">
-        <div className={cn("mx-auto flex w-full max-w-4xl flex-col gap-12", className)}>
+        <div
+          data-experience-mode={experienceMode}
+          className={cn(
+            "mx-auto flex w-full max-w-4xl flex-col gap-12",
+            experienceMode === "knowledge_worker" && "settings-experience-knowledge-worker",
+            className,
+          )}
+        >
           {children}
         </div>
       </div>
